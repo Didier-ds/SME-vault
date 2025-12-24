@@ -37,31 +37,6 @@ describe("nexus-treasury", () => {
             approver2 = Keypair.generate();
             nonOwner = Keypair.generate();
 
-            [vaultPda] = PublicKey.findProgramAddressSync([
-                Buffer.from('vault'),
-                owner.toBuffer(),
-                Buffer.from(vaultName)
-            ],
-                program.programId
-            );
-
-            try {
-                await program.methods.createVault(
-                    vaultName,
-                    2,
-                    new anchor.BN(10000),
-                    new anchor.BN(5000),
-                    new anchor.BN(3000),
-                    new anchor.BN(24)
-                ).accounts({
-                    vault: vaultPda,
-                    owner,
-                    systemProgram: anchor.web3.SystemProgram.programId,
-                }).rpc()
-            }  catch (error) {
-                // Vault might already exist, that's okay
-            }
-
             // Airdrop SOL to test keypairs (using modern approach)
             await airdropAndConfirm(
                 approver1.publicKey,
@@ -77,7 +52,44 @@ describe("nexus-treasury", () => {
             );
         });
 
+        // Helper function to create a vault with unique name
+        const createTestVault = async (vaultName: string) => {
+            const [vaultPda] = PublicKey.findProgramAddressSync(
+                [
+                    Buffer.from("vault"),
+                    owner.toBuffer(),
+                    Buffer.from(vaultName),
+                ],
+                program.programId
+            );
+
+            try {
+                await program.methods
+                    .createVault(
+                        vaultName,
+                        2,
+                        new anchor.BN(10000),
+                        new anchor.BN(5000),
+                        new anchor.BN(3000),
+                        new anchor.BN(24)
+                    )
+                    .accounts({
+                        vault: vaultPda,
+                        owner: owner,
+                        systemProgram: anchor.web3.SystemProgram.programId,
+                    })
+                    .rpc();
+            } catch (error) {
+                // Vault might already exist, that's okay
+            }
+
+            return vaultPda;
+        };
+
         it('Owner can add an approver', async () => {
+            const vaultName = `Test Vault ${Date.now()}-1`; // Unique name
+            const vaultPda = await createTestVault(vaultName);
+
             const tx = await program.methods.addApprover(approver1.publicKey)
                 .accounts({
                     vault: vaultPda,
@@ -96,6 +108,9 @@ describe("nexus-treasury", () => {
         });
 
         it("Owner can add multiple approvers", async () => {
+            const vaultName = `Test Vault ${Date.now()}-2`; // Unique name
+            const vaultPda = await createTestVault(vaultName);
+
             // Add first approver
             await program.methods
                 .addApprover(approver1.publicKey)
@@ -131,6 +146,9 @@ describe("nexus-treasury", () => {
         });
 
         it("Fails when non-owner tries to add approver", async () => {
+            const vaultName = `Test Vault ${Date.now()}-3`; // Unique name
+            const vaultPda = await createTestVault(vaultName);
+
             try {
                 await program.methods
                     .addApprover(approver1.publicKey)
@@ -149,6 +167,9 @@ describe("nexus-treasury", () => {
         });
 
         it("Fails when trying to add duplicate approver", async () => {
+            const vaultName = `Test Vault ${Date.now()}-4`; // Unique name
+            const vaultPda = await createTestVault(vaultName);
+
             // Add approver first time
             await program.methods
                 .addApprover(approver1.publicKey)
@@ -175,6 +196,9 @@ describe("nexus-treasury", () => {
         });
 
         it("Fails when trying to exceed max approvers (10)", async () => {
+            const vaultName = `Test Vault ${Date.now()}-5`; // Unique name
+            const vaultPda = await createTestVault(vaultName);
+
             // Add 10 approvers (the max)
             const approvers: Keypair[] = [];
             for (let i = 0; i < 10; i++) {
@@ -224,6 +248,9 @@ describe("nexus-treasury", () => {
         });
 
         it("Approver list persists after adding", async () => {
+            const vaultName = `Test Vault ${Date.now()}-6`; // Unique name
+            const vaultPda = await createTestVault(vaultName);
+
             // Add approver
             await program.methods
                 .addApprover(approver1.publicKey)

@@ -10,6 +10,15 @@ pub enum ErrorCode {
     
     #[msg("Invalid limit: Limit must be greater than 0")]
     InvalidLimit,
+
+    #[msg("Unauthorized: You are not authorized to perform this action")]
+    Unauthorized,
+
+    #[msg("Max approvers reached: Cannot add more than 10 approvers")]
+    MaxApproversReached,
+
+    #[msg("Duplicate approver: Approver is already in the list")]
+    DuplicateApprover,
     
     #[msg("Custom error message")]
     CustomError,

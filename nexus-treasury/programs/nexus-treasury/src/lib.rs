@@ -39,4 +39,13 @@ pub mod nexus_treasury {
             delay_hours,
         )
     }
+
+    pub fn add_approver(
+        ctx: Context<AddApprover>,
+        approver: Pubkey,
+    ) -> Result<()> {
+        instructions::add_approver::handler(ctx, approver)
+    }
+
+
 }
