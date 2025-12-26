@@ -1,25 +1,33 @@
 use anchor_lang::prelude::*;
-use crate::{Vault, ErrorCode, MAX_APPROVERS};
+use crate::{Vault, VaultErrorCode, MAX_APPROVERS};
 
 pub fn handler(ctx: Context<AddApprover>, approver: Pubkey) -> Result<()> {
     let vault = &mut ctx.accounts.vault;
 
+    // Debug logging - see what's happening
+    msg!("🔍 ADD_APPROVER called");
+    msg!("   Vault: {}", vault.key());
+    msg!("   Owner: {}", ctx.accounts.owner.key());
+    msg!("   Approver to add: {}", approver);
+    msg!("   Current approvers count: {}/{}", vault.approvers.len(), MAX_APPROVERS);
+
     // 1. Validate: Check max approvers
     require!(
         vault.approvers.len() < MAX_APPROVERS,
-        ErrorCode::MaxApproversReached
+        VaultErrorCode::MaxApproversReached
     );
 
     // 2. Validate: Check for duplicates
     require!(
         !vault.approvers.contains(&approver),
-        ErrorCode::DuplicateApprover
+        VaultErrorCode::DuplicateApprover
     );
 
     // 3. Add approver to the list
     vault.approvers.push(approver);
 
-    msg!("Approver added: {}", approver);
+    msg!("✅ Approver added successfully: {}", approver);
+    msg!("   New approvers count: {}", vault.approvers.len());
 
     Ok(())
 }
@@ -34,7 +42,7 @@ pub struct AddApprover<'info> {
             vault.name.as_bytes()
         ],
         bump = vault.bump,
-        has_one = owner @ ErrorCode::Unauthorized
+        has_one = owner @ VaultErrorCode::Unauthorized
     )]
     pub vault: Account<'info, Vault>,
 

@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum ErrorCode {
+pub enum VaultErrorCode {
     #[msg("Invalid name: Name must be between 1 and 50 characters")]
     InvalidName,
     
@@ -19,6 +19,9 @@ pub enum ErrorCode {
 
     #[msg("Duplicate approver: Approver is already in the list")]
     DuplicateApprover,
+
+    #[msg("Approver not found")]
+    ApproverNotFound,
     
     #[msg("Custom error message")]
     CustomError,

@@ -6,7 +6,7 @@ pub mod state;
 use anchor_lang::prelude::*;
 
 pub use constants::*;
-pub use error::ErrorCode;
+pub use error::VaultErrorCode;
 pub use instructions::*;
 pub use state::*;
 
@@ -45,6 +45,13 @@ pub mod nexus_treasury {
         approver: Pubkey,
     ) -> Result<()> {
         instructions::add_approver::handler(ctx, approver)
+    }
+
+    pub fn remove_approver(
+        ctx: Context<RemoveApprover>,
+        approver: Pubkey
+    ) -> Result<()> {
+        instructions::remove_approver::handler(ctx, approver)
     }
 
 

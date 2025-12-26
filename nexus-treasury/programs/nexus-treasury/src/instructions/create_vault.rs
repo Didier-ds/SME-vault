@@ -1,12 +1,12 @@
 use anchor_lang::prelude::*;
-use crate::{Vault, ErrorCode};
+use crate::{Vault, VaultErrorCode};
 
 pub fn handler(ctx: Context<CreateVault>, name: String, approval_threshold: u8, daily_limit: u64, tx_limit: u64, large_withdrawal_threshold: u64, delay_hours: u64) -> Result<()> {
-    require!(name.len() > 0 && name.len() <= 50, ErrorCode::InvalidName);
-    require!(approval_threshold > 0, ErrorCode::InvalidThreshold);
-    require!(daily_limit > 0, ErrorCode::InvalidLimit);
-    require!(tx_limit > 0, ErrorCode::InvalidLimit);
-    require!(large_withdrawal_threshold > 0, ErrorCode::InvalidLimit);
+    require!(name.len() > 0 && name.len() <= 50, VaultErrorCode::InvalidName);
+    require!(approval_threshold > 0, VaultErrorCode::InvalidThreshold);
+    require!(daily_limit > 0, VaultErrorCode::InvalidLimit);
+    require!(tx_limit > 0, VaultErrorCode::InvalidLimit);
+    require!(large_withdrawal_threshold > 0, VaultErrorCode::InvalidLimit);
 
     let vault = &mut ctx.accounts.vault;
 
