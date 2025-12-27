@@ -54,5 +54,7 @@ pub mod nexus_treasury {
         instructions::remove_approver::handler(ctx, approver)
     }
 
-
+    pub fn add_staff(ctx: Context<AddStaff>, staff: Pubkey) -> Result<()> {
+        instructions::add_staff::handler(ctx, staff)
+    }
 }

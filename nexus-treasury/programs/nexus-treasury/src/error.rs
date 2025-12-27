@@ -22,7 +22,16 @@ pub enum VaultErrorCode {
 
     #[msg("Approver not found")]
     ApproverNotFound,
-    
+
+    #[msg("Max staff reached: Cannot add more than 20 staff members")]
+    MaxStaffReached,
+
+    #[msg("Duplicate staff: Staff member is already in the list")]
+    DuplicateStaff,
+
+    #[msg("Staff not found")]
+    StaffNotFound,
+
     #[msg("Custom error message")]
     CustomError,
 }
