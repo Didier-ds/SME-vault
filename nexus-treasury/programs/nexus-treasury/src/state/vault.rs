@@ -19,6 +19,7 @@ pub struct Vault {
     pub frozen: bool,
     pub created_at: i64,
     pub bump: u8,
+    pub withdrawal_count: u64,
 }
 
 impl Vault {

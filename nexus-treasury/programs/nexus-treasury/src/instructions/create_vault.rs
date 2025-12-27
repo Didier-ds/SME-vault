@@ -22,6 +22,7 @@ pub fn handler(ctx: Context<CreateVault>, name: String, approval_threshold: u8, 
     vault.frozen = false;
     vault.created_at = Clock::get()?.unix_timestamp;
     vault.bump = ctx.bumps.vault;
+    vault.withdrawal_count = 0;
 
     // 4. LOG FOR DEBUGGING
     msg!("Vault created: {} by {}", vault.name, vault.owner);

@@ -32,6 +32,30 @@ pub enum VaultErrorCode {
     #[msg("Staff not found")]
     StaffNotFound,
 
+    #[msg("Vault is frozen: Cannot perform this action while vault is frozen")]
+    VaultFrozen,
+
+    #[msg("Exceeds limit: Amount exceeds configured transaction limit")]
+    ExceedsLimit,
+
+    #[msg("Invalid status: Operation not allowed for current withdrawal status")]
+    InvalidStatus,
+
+    #[msg("Already approved: This approver has already approved this request")]
+    AlreadyApproved,
+
+    #[msg("Self-approval not allowed: Cannot approve your own withdrawal request")]
+    SelfApprovalNotAllowed,
+
+    #[msg("Insufficient approvals: Not enough approvals to execute withdrawal")]
+    InsufficientApprovals,
+
+    #[msg("Delay not passed: Time delay period has not elapsed yet")]
+    DelayNotPassed,
+
+    #[msg("Insufficient balance: Vault does not have enough tokens")]
+    InsufficientBalance,
+
     #[msg("Custom error message")]
     CustomError,
 }

@@ -61,4 +61,13 @@ pub mod nexus_treasury {
     pub fn remove_staff(ctx: Context<RemoveStaff>, staff: Pubkey) -> Result<()> {
         instructions::staff::remove_staff::handler(ctx, staff)
     }
+
+    pub fn request_withdrawal(
+        ctx: Context<RequestWithdrawal>,
+        amount: u64,
+        destination: Pubkey,
+        reason: String,
+    ) -> Result<()> {
+        instructions::request_withdrawal::handler(ctx, amount, destination, reason)
+    }
 }
