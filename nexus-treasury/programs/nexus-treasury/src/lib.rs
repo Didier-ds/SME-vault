@@ -57,4 +57,8 @@ pub mod nexus_treasury {
     pub fn add_staff(ctx: Context<AddStaff>, staff: Pubkey) -> Result<()> {
         instructions::add_staff::handler(ctx, staff)
     }
+
+    pub fn remove_staff(ctx: Context<RemoveStaff>, staff: Pubkey) -> Result<()> {
+        instructions::staff::remove_staff::handler(ctx, staff)
+    }
 }
