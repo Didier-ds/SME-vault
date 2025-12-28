@@ -70,4 +70,8 @@ pub mod nexus_treasury {
     ) -> Result<()> {
         instructions::request_withdrawal::handler(ctx, amount, destination, reason)
     }
+
+    pub fn approve_withdrawal(ctx: Context<ApproveWithdrawal>) -> Result<()> {
+        instructions::withdrawals::approve_withdrawal::handler(ctx)
+    }
 }
