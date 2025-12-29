@@ -13,7 +13,7 @@ pub use state::*;
 declare_id!("87oBsf59JzNKiCwqhpzKceYgJm1LnwPdnA3FxCE29D7p");
 
 #[program]
-pub mod nexus_treasury {
+pub mod sme_vault {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {

@@ -1,13 +1,13 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { PublicKey, Keypair } from "@solana/web3.js";
-import { NexusTreasury } from "../target/types/nexus_treasury";
+import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
 
 describe("nexus-treasury", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.NexusTreasury as Program<NexusTreasury>;
+  const program = anchor.workspace.SmeVault as Program<SmeVault>;
   const provider = anchor.AnchorProvider.env();
 
   describe("add_staff", () => {

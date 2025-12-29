@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Development helper script for Nexus Treasury
+# Development helper script for SME Vault
 # Makes it easy to see logs while developing
 
-echo "🚀 Nexus Treasury - Development Mode"
+echo "🚀 SME Vault - Development Mode"
 echo ""
 
 case "$1" in

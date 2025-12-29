@@ -1,4 +1,4 @@
-# Nexus Treasury - Development TODO List
+# SME Vault - Development TODO List
 
 ## 📋 How to Use This Document
 

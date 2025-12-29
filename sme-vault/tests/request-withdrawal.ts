@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { NexusTreasury } from "../target/types/nexus_treasury";
+import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
 import { PublicKey, Keypair } from "@solana/web3.js";
 
@@ -8,7 +8,7 @@ describe("request_withdrawal", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.NexusTreasury as Program<NexusTreasury>;
+  const program = anchor.workspace.SmeVault as Program<SmeVault>;
 
   let vaultPda: PublicKey;
   let staffMember: Keypair;

@@ -1,16 +1,16 @@
-# Nexus Treasury
+# SME Vault
 
 Non-custodial, multi-signature crypto treasury management system built on Solana.
 
 ## Project Overview
 
-Nexus Treasury is a smart contract-based treasury management platform designed for small and medium enterprises (SMEs) managing cryptocurrency assets. It provides bank-level security controls through programmable on-chain rules, multi-signature approval workflows, and time-delayed execution for large withdrawals.
+SME Vault is a smart contract-based treasury management platform designed for small and medium enterprises (SMEs) managing cryptocurrency assets. It provides bank-level security controls through programmable on-chain rules, multi-signature approval workflows, and time-delayed execution for large withdrawals.
 
 The system eliminates single points of failure in crypto asset management by enforcing role-based access control, approval thresholds, spending limits, and time delays—all enforced on-chain via Solana smart contracts. No third party can access funds; the business maintains full custody while benefiting from institutional-grade controls.
 
 **Target users:** SMEs (10-500 employees) managing USDC and other SPL tokens, particularly those requiring approval workflows for operational spending, fraud prevention, and accountability.
 
-**Core problem solved:** Traditional crypto wallets have no built-in approval processes, spending limits, or time delays. A single compromised key can drain funds instantly. Nexus Treasury enforces programmable rules that cannot be bypassed, even by the vault owner.
+**Core problem solved:** Traditional crypto wallets have no built-in approval processes, spending limits, or time delays. A single compromised key can drain funds instantly. SME Vault enforces programmable rules that cannot be bypassed, even by the vault owner.
 
 ## Tech Stack
 
@@ -133,7 +133,7 @@ Withdrawal request PDAs use a counter seed: `["withdrawal", vault_pubkey, counte
 
 ### Important Abstractions
 
-**Vault Account** (`programs/nexus-treasury/src/state/vault.rs`)
+**Vault Account** (`programs/sme-vault/src/state/vault.rs`)
 
 Central authority object. Stores:
 - Owner (Pubkey)
@@ -145,7 +145,7 @@ Central authority object. Stores:
 - Frozen flag (emergency stop)
 - Withdrawal counter (for PDA derivation)
 
-**WithdrawalRequest Account** (`programs/nexus-treasury/src/state/withdrawal_request.rs`)
+**WithdrawalRequest Account** (`programs/sme-vault/src/state/withdrawal_request.rs`)
 
 Represents a single withdrawal request. Stores:
 - Amount, destination, requester
@@ -153,7 +153,7 @@ Represents a single withdrawal request. Stores:
 - Status enum (Pending/Approved/Executed/Rejected)
 - Timestamps (created_at, delay_until, executed_at)
 
-**Instruction Modules** (`programs/nexus-treasury/src/instructions/`)
+**Instruction Modules** (`programs/sme-vault/src/instructions/`)
 
 Organized by domain:
 - `approvers/` — add/remove approver instructions
@@ -165,9 +165,9 @@ Organized by domain:
 ## Project Structure
 
 ```
-nexus-treasury/                 # Anchor workspace root
+sme-vault/                 # Anchor workspace root
 ├── programs/
-│   └── nexus-treasury/
+│   └── sme-vault/
 │       ├── src/
 │       │   ├── lib.rs                     # Program entrypoint, instruction routing
 │       │   ├── constants.rs               # Global constants (seeds, max values)
@@ -221,8 +221,8 @@ test-ledger/                    # Local validator ledger (gitignored)
 ```
 
 **Key Directories:**
-- `programs/nexus-treasury/src/instructions/` — All business logic lives here. Each instruction is a separate module with its handler function and account validation context.
-- `programs/nexus-treasury/src/state/` — Account schemas. Use `#[derive(InitSpace)]` for automatic size calculation.
+- `programs/sme-vault/src/instructions/` — All business logic lives here. Each instruction is a separate module with its handler function and account validation context.
+- `programs/sme-vault/src/state/` — Account schemas. Use `#[derive(InitSpace)]` for automatic size calculation.
 - `tests/` — Integration tests using Anchor's TypeScript client. Each test file covers one instruction.
 
 **Non-Obvious Conventions:**
@@ -247,7 +247,7 @@ test-ledger/                    # Local validator ledger (gitignored)
 
 ### Environment Variables
 
-Create `.env` in `nexus-treasury/` (for frontend, when built):
+Create `.env` in `sme-vault/` (for frontend, when built):
 
 ```bash
 # RPC endpoint
@@ -268,7 +268,7 @@ NEXT_PUBLIC_CLUSTER=localnet
 ```bash
 # 1. Clone repository
 git clone <repo-url>
-cd SME-vault/nexus-treasury
+cd SME-vault/sme-vault
 
 # 2. Install dependencies
 yarn install
@@ -301,7 +301,7 @@ anchor test  # Starts validator, deploys, runs tests, shuts down
 
 **1. `anchor build` fails with "program not found"**
 
-Ensure you're in the `nexus-treasury/` directory (where `Anchor.toml` lives), not the parent `SME-vault/` directory.
+Ensure you're in the `sme-vault/` directory (where `Anchor.toml` lives), not the parent `SME-vault/` directory.
 
 **2. `solana-test-validator` already running**
 
@@ -314,7 +314,7 @@ pkill solana-test-validator
 **3. Deployment fails with "account already in use"**
 
 Program ID collision. Either:
-- Delete `target/deploy/nexus_treasury-keypair.json` and rebuild (generates new ID)
+- Delete `target/deploy/sme_vault-keypair.json` and rebuild (generates new ID)
 - Or use `anchor upgrade` instead of `anchor deploy` (if intentionally redeploying)
 
 **4. Tests fail with "Invalid account discriminator"**
@@ -366,7 +366,7 @@ yarn run ts-mocha tests/*.ts    # Run specific test file
 **Deploy:**
 ```bash
 anchor deploy                   # Deploy to cluster in Anchor.toml
-solana program deploy target/deploy/nexus_treasury.so  # Manual deploy
+solana program deploy target/deploy/sme_vault.so  # Manual deploy
 ```
 
 **Linting & Formatting:**
@@ -385,13 +385,13 @@ Tests live in `tests/*.ts`. Each file tests one instruction:
 // tests/approve-withdrawal.ts
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { NexusTreasury } from "../target/types/nexus_treasury";
+import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
 
 describe("approve_withdrawal", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
-  const program = anchor.workspace.NexusTreasury as Program<NexusTreasury>;
+  const program = anchor.workspace.SmeVault as Program<SmeVault>;
 
   it("approves a withdrawal request", async () => {
     // Test implementation
@@ -432,7 +432,7 @@ git push origin hotfix/approval-validation
 
 ### 1. Vault Creation & Management
 
-**Location:** `programs/nexus-treasury/src/instructions/create_vault.rs`
+**Location:** `programs/sme-vault/src/instructions/create_vault.rs`
 
 **Purpose:** Initializes a treasury vault with configurable security parameters.
 
@@ -454,8 +454,8 @@ seeds = [b"vault", owner.key().as_ref(), name.as_bytes()]
 ### 2. Role Management (Approvers & Staff)
 
 **Location:**
-- `programs/nexus-treasury/src/instructions/approvers/`
-- `programs/nexus-treasury/src/instructions/staff/`
+- `programs/sme-vault/src/instructions/approvers/`
+- `programs/sme-vault/src/instructions/staff/`
 
 **Purpose:** Owner-only functions to add/remove users from role lists.
 
@@ -471,7 +471,7 @@ seeds = [b"vault", owner.key().as_ref(), name.as_bytes()]
 
 ### 3. Withdrawal Request System
 
-**Location:** `programs/nexus-treasury/src/instructions/withdrawals/request_withdrawal.rs`
+**Location:** `programs/sme-vault/src/instructions/withdrawals/request_withdrawal.rs`
 
 **Purpose:** Staff members create withdrawal requests for approver review.
 
@@ -506,7 +506,7 @@ if amount >= vault.large_withdrawal_threshold {
 
 ### 4. Approval Workflow
 
-**Location:** `programs/nexus-treasury/src/instructions/withdrawals/approve_withdrawal.rs`
+**Location:** `programs/sme-vault/src/instructions/withdrawals/approve_withdrawal.rs`
 
 **Purpose:** Approvers vote on pending withdrawal requests.
 
@@ -530,7 +530,7 @@ if withdrawal.approvals.len() >= vault.approval_threshold as usize {
 
 ### 5. Withdrawal Execution (Token Transfer)
 
-**Location:** `programs/nexus-treasury/src/instructions/withdrawals/execute_withdrawal.rs`
+**Location:** `programs/sme-vault/src/instructions/withdrawals/execute_withdrawal.rs`
 
 **Purpose:** Performs the actual SPL token transfer after all checks pass.
 
@@ -691,11 +691,11 @@ anchor clean
 anchor build
 
 # 3. Verify program size (Solana has 10MB limit per program)
-ls -lh target/deploy/nexus_treasury.so
+ls -lh target/deploy/sme_vault.so
 # Should be ~500KB after optimization
 
 # 4. Generate IDL (auto-generated by anchor build)
-# Located at: target/idl/nexus_treasury.json
+# Located at: target/idl/sme_vault.json
 
 # 5. Run tests to verify build
 anchor test --skip-build

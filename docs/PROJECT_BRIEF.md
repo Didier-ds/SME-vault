@@ -1,8 +1,8 @@
-# Nexus Treasury - Project Brief
+# SME Vault - Project Brief
 
 ## 📋 Executive Summary
 
-**Project Name:** Nexus Treasury  
+**Project Name:** SME Vault  
 **Tagline:** "Where Security Meets Collaboration"  
 **Category:** SME Crypto Treasury Management Platform  
 **Target Market:** Small and Medium Enterprises (10-500 employees)  
@@ -32,7 +32,7 @@
 
 ## 💡 Our Solution
 
-### What is Nexus Treasury?
+### What is SME Vault?
 
 A **non-custodial, smart contract-based treasury management system** that gives small businesses bank-level security controls over their crypto funds, entirely on-chain, with no third-party custody.
 

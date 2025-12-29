@@ -1,12 +1,12 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { NexusTreasury } from "../target/types/nexus_treasury";
+import { SmeVault } from "../target/types/sme_vault";
 
-describe("nexus-treasury", () => {
+describe("sme-vault", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.nexusTreasury as Program<NexusTreasury>;
+  const program = anchor.workspace.smeVault as Program<SmeVault>;
 
   it("Is initialized!", async () => {
     // Add your test here.

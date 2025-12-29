@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-nexus_treasury = "87oBsf59JzNKiCwqhpzKceYgJm1LnwPdnA3FxCE29D7p"
+sme_vault = "87oBsf59JzNKiCwqhpzKceYgJm1LnwPdnA3FxCE29D7p"
 
 [registry]
 url = "https://api.apr.dev"

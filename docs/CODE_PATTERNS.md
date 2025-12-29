@@ -1,4 +1,4 @@
-# Nexus Treasury - Code Patterns & Best Practices
+# SME Vault - Code Patterns & Best Practices
 
 ## 📚 Table of Contents
 
@@ -18,7 +18,7 @@
 
 ```rust
 #[program]
-pub mod nexus_treasury {
+pub mod sme_vault {
     use super::*;
 
     /// Instruction: Create a new vault
@@ -377,8 +377,8 @@ pub vault: Account<'info, Vault>,
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useMemo } from 'react';
-import { NexusTreasury } from '@/types/nexus_treasury'; // Generated IDL type
-import idl from '@/idl/nexus_treasury.json';
+import { SmeVault } from '@/types/sme_vault'; // Generated IDL type
+import idl from '@/idl/sme_vault.json';
 import { PublicKey } from '@solana/web3.js';
 
 const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
@@ -400,7 +400,7 @@ export function useProgram() {
     );
     
     return new Program(
-      idl as NexusTreasury,
+      idl as SmeVault,
       PROGRAM_ID,
       provider
     );
@@ -971,18 +971,18 @@ export function VaultDashboard({ vault }: { vault: VaultData }) {
 ### Pattern 1: Anchor Test Structure
 
 ```typescript
-// tests/nexus-treasury.ts
+// tests/sme-vault.ts
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { NexusTreasury } from "../target/types/nexus_treasury";
+import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
 import { PublicKey } from "@solana/web3.js";
 
-describe("nexus-treasury", () => {
+describe("sme-vault", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.NexusTreasury as Program<NexusTreasury>;
+  const program = anchor.workspace.SmeVault as Program<SmeVault>;
   
   // Test accounts
   let vaultPda: PublicKey;
@@ -1212,4 +1212,4 @@ emit!(WithdrawalExecuted {
 
 **Document Version:** 1.0  
 **Last Updated:** December 2024  
-**For:** Nexus Treasury Development
+**For:** SME Vault Development
