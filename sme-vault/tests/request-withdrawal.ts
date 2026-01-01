@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
+import { fundWallet } from "./utils/fund-wallet";
 import { PublicKey, Keypair } from "@solana/web3.js";
 
 describe("request_withdrawal", () => {
@@ -21,19 +22,9 @@ describe("request_withdrawal", () => {
     nonStaff = Keypair.generate();
     destination = Keypair.generate();
 
-    // Airdrop SOL to staff member
-    const signature = await provider.connection.requestAirdrop(
-      staffMember.publicKey,
-      2 * anchor.web3.LAMPORTS_PER_SOL
-    );
-    await provider.connection.confirmTransaction(signature);
-
-    // Airdrop to non-staff
-    const sig2 = await provider.connection.requestAirdrop(
-      nonStaff.publicKey,
-      2 * anchor.web3.LAMPORTS_PER_SOL
-    );
-    await provider.connection.confirmTransaction(sig2);
+    // Fund test wallets from provider wallet (need extra for rent + transfers)
+    await fundWallet(provider, staffMember.publicKey, 0.2);
+    await fundWallet(provider, nonStaff.publicKey, 0.2);
 
     // Create vault
     [vaultPda] = PublicKey.findProgramAddressSync(

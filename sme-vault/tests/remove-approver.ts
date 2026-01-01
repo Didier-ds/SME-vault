@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
+import { fundWallet } from "./utils/fund-wallet";
 import { PublicKey, Keypair } from "@solana/web3.js";
 
 describe("remove_approver", () => {
@@ -138,11 +139,7 @@ describe("remove_approver", () => {
     const nonOwner = Keypair.generate();
 
     // Airdrop SOL to non-owner for transaction fees
-    const signature = await provider.connection.requestAirdrop(
-      nonOwner.publicKey,
-      2 * anchor.web3.LAMPORTS_PER_SOL
-    );
-    await provider.connection.confirmTransaction(signature);
+    await fundWallet(provider, nonOwner.publicKey, 0.05);
 
     try {
       await program.methods

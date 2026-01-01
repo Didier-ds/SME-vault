@@ -12,7 +12,7 @@ describe("sme-vault", () => {
 
     describe("create-vault", () => {
         it("Creates a vault with valid parameters", async () => {
-            const vaultName = "Test vault";
+            const vaultName = `Test vault ${Date.now()}`;
             const owner = provider.wallet.publicKey;
 
             const [vaultPda] = PublicKey.findProgramAddressSync([

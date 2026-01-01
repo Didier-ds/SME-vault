@@ -5,15 +5,15 @@ package_manager = "yarn"
 resolution = true
 skip-lint = false
 
-[programs.localnet]
-sme_vault = "87oBsf59JzNKiCwqhpzKceYgJm1LnwPdnA3FxCE29D7p"
+[programs.devnet]
+sme_vault = "FYyrCQQ2rEfZEBYDB9SqJefsfdYTWR3HdbBzexVfuKkp"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "https://devnet.helius-rpc.com/?api-key=35a22f6e-ab56-4212-a804-bd88139fe332"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 'tests/*.ts'"

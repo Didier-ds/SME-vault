@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
+import { fundWallet } from "./utils/fund-wallet";
 import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
@@ -36,7 +37,7 @@ describe("execute_withdrawal", () => {
     executor = Keypair.generate();
     destination = Keypair.generate();
 
-    // Airdrop SOL to all participants
+    // Fund participants (0.3 SOL for multiple PDAs + rent + fees)
     const airdropPromises = [
       staffMember,
       approver1,
@@ -44,11 +45,7 @@ describe("execute_withdrawal", () => {
       executor,
       destination,
     ].map(async (keypair) => {
-      const signature = await provider.connection.requestAirdrop(
-        keypair.publicKey,
-        2 * anchor.web3.LAMPORTS_PER_SOL
-      );
-      await provider.connection.confirmTransaction(signature);
+      await fundWallet(provider, keypair.publicKey, 0.3);
     });
     await Promise.all(airdropPromises);
 
@@ -557,11 +554,7 @@ describe("execute_withdrawal", () => {
 
     // Execute with a random person (not staff, not approver)
     const randomExecutor = Keypair.generate();
-    const sig = await provider.connection.requestAirdrop(
-      randomExecutor.publicKey,
-      1 * anchor.web3.LAMPORTS_PER_SOL
-    );
-    await provider.connection.confirmTransaction(sig);
+    await fundWallet(provider, randomExecutor.publicKey, 0.3);
 
     await program.methods
       .executeWithdrawal()

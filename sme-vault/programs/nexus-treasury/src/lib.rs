@@ -10,7 +10,8 @@ pub use error::VaultErrorCode;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("87oBsf59JzNKiCwqhpzKceYgJm1LnwPdnA3FxCE29D7p");
+// declare_id!("87oBsf59JzNKiCwqhpzKceYgJm1LnwPdnA3FxCE29D7p");
+declare_id!("FYyrCQQ2rEfZEBYDB9SqJefsfdYTWR3HdbBzexVfuKkp");
 
 #[program]
 pub mod sme_vault {

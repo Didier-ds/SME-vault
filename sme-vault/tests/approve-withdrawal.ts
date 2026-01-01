@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
+import { fundWallet } from "./utils/fund-wallet";
 import { PublicKey, Keypair } from "@solana/web3.js";
 
 describe("approve_withdrawal", () => {
@@ -27,7 +28,7 @@ describe("approve_withdrawal", () => {
     nonApprover = Keypair.generate();
     destination = Keypair.generate();
 
-    // Airdrop SOL to all participants
+    // Airdrop SOL to all participants (0.05 SOL is enough for multiple transactions)
     const airdropPromises = [
       staffMember,
       approver1,
@@ -35,11 +36,7 @@ describe("approve_withdrawal", () => {
       approver3,
       nonApprover,
     ].map(async (keypair) => {
-      const signature = await provider.connection.requestAirdrop(
-        keypair.publicKey,
-        2 * anchor.web3.LAMPORTS_PER_SOL
-      );
-      await provider.connection.confirmTransaction(signature);
+      await fundWallet(provider, keypair.publicKey, 0.05);
     });
     await Promise.all(airdropPromises);
 

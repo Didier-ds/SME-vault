@@ -3,6 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
+import { fundWallet } from "./utils/fund-wallet";
 
 describe("nexus-treasury", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -18,39 +19,16 @@ describe("nexus-treasury", () => {
     let nonOwner: Keypair;
     const vaultName = "Test Vault for Staff";
 
-    const airdropAndConfirm = async (publicKey: PublicKey, amount: number) => {
-      const signature = await provider.connection.requestAirdrop(
-        publicKey,
-        amount
-      );
-
-      const latestBlockhash = await provider.connection.getLatestBlockhash();
-      await provider.connection.confirmTransaction({
-        signature,
-        blockhash: latestBlockhash.blockhash,
-        lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-      });
-    };
-
-    beforeEach(async () => {
+    before(async () => {
       owner = provider.wallet.publicKey;
       staffMember1 = Keypair.generate();
       staffMember2 = Keypair.generate();
       nonOwner = Keypair.generate();
 
-      // Airdrop SOL to test keypairs (using modern approach)
-      await airdropAndConfirm(
-        staffMember1.publicKey,
-        2 * anchor.web3.LAMPORTS_PER_SOL
-      );
-      await airdropAndConfirm(
-        staffMember2.publicKey,
-        2 * anchor.web3.LAMPORTS_PER_SOL
-      );
-      await airdropAndConfirm(
-        nonOwner.publicKey,
-        2 * anchor.web3.LAMPORTS_PER_SOL
-      );
+      // Fund test wallets from provider wallet (bypasses faucet rate limits)
+      await fundWallet(provider, staffMember1.publicKey, 0.05);
+      await fundWallet(provider, staffMember2.publicKey, 0.05);
+      await fundWallet(provider, nonOwner.publicKey, 0.05);
     });
 
     // Helper function to create a vault with unique name
@@ -209,9 +187,9 @@ describe("nexus-treasury", () => {
         staffMembers.push(staff);
 
         // Airdrop SOL
-        await airdropAndConfirm(
+        await fundWallet(provider, 
           staff.publicKey,
-          2 * anchor.web3.LAMPORTS_PER_SOL
+          0.05
         );
 
         // Add staff
@@ -230,9 +208,9 @@ describe("nexus-treasury", () => {
 
       // Try to add 21st staff member (should fail)
       const staff21 = Keypair.generate();
-      await airdropAndConfirm(
+      await fundWallet(provider, 
         staff21.publicKey,
-        2 * anchor.web3.LAMPORTS_PER_SOL
+        0.05
       );
 
       try {

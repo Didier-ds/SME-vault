@@ -3,6 +3,7 @@ import {Program} from "@coral-xyz/anchor";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { SmeVault } from "../target/types/sme_vault";
 import {expect} from "chai";
+import { fundWallet } from "./utils/fund-wallet";
 describe("sme-vault", () => {
     anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -17,39 +18,16 @@ describe("sme-vault", () => {
         let nonOwner: Keypair;
         const vaultName = "Test Vault for Approvers";
 
-        const airdropAndConfirm = async (publicKey: PublicKey, amount: number) => {
-            const signature = await provider.connection.requestAirdrop(
-                publicKey,
-                amount
-            );
-
-            const latestBlockhash = await provider.connection.getLatestBlockhash();
-            await provider.connection.confirmTransaction({
-                signature,
-                blockhash: latestBlockhash.blockhash,
-                lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-            });
-        };
-
-        beforeEach(async () => {
+        before(async () => {
             owner = provider.wallet.publicKey;
             approver1 = Keypair.generate();
             approver2 = Keypair.generate();
             nonOwner = Keypair.generate();
 
-            // Airdrop SOL to test keypairs (using modern approach)
-            await airdropAndConfirm(
-                approver1.publicKey,
-                2 * anchor.web3.LAMPORTS_PER_SOL
-            );
-            await airdropAndConfirm(
-                approver2.publicKey,
-                2 * anchor.web3.LAMPORTS_PER_SOL
-            );
-            await airdropAndConfirm(
-                nonOwner.publicKey,
-                2 * anchor.web3.LAMPORTS_PER_SOL
-            );
+            // Fund test wallets from provider wallet (bypasses faucet rate limits)
+            await fundWallet(provider, approver1.publicKey, 0.05);
+            await fundWallet(provider, approver2.publicKey, 0.05);
+            await fundWallet(provider, nonOwner.publicKey, 0.05);
         });
 
         // Helper function to create a vault with unique name
@@ -191,7 +169,8 @@ describe("sme-vault", () => {
 
                 expect.fail("Should have thrown an error");
             } catch (error: any) {
-                expect(error.error.errorMessage).to.include("Duplicate approver");
+                const errorMsg = error.error?.errorMessage || error.message || String(error);
+                expect(errorMsg).to.include("Duplicate approver");
             }
         });
 
@@ -206,9 +185,9 @@ describe("sme-vault", () => {
                 approvers.push(approver);
 
                 // Airdrop SOL
-                await airdropAndConfirm(
+                await fundWallet(provider, 
                     approver.publicKey,
-                    2 * anchor.web3.LAMPORTS_PER_SOL
+                    0.05
                 );
 
                 // Add approver
@@ -227,9 +206,9 @@ describe("sme-vault", () => {
 
             // Try to add 11th approver (should fail)
             const approver11 = Keypair.generate();
-            await airdropAndConfirm(
+            await fundWallet(provider, 
                 approver11.publicKey,
-                2 * anchor.web3.LAMPORTS_PER_SOL
+                0.05
             );
 
             try {
