@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-sme_vault = "FYyrCQQ2rEfZEBYDB9SqJefsfdYTWR3HdbBzexVfuKkp"
+sme_vault = "A5nASa3jpqhhpSLmqWayd4GnW8RRe38LCncz5GZmT4Mi"
 
 [registry]
 url = "https://api.apr.dev"

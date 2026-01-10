@@ -26,14 +26,15 @@ _Location: `sme-vault/app`_
   - [x] Font Stack (Helvetica Now)
   - [x] Layout Wrapper
   - [x] `shadcn/ui` Setup & Override
-- [ ] **Wallet Integration**
-  - [ ] Wrap app in `SolanaWalletProvider`
-  - [ ] Add Connect Button to Sidebar/Header
+- [x] **Wallet Integration**
+  - [x] Wrap app in `SolanaWalletProvider`
+  - [x] Add Connect Button to Sidebar/Header
   - [ ] Authenticate user role (Owner vs Staff vs Public)
-- [ ] **Smart Contract Connection**
-  - [ ] Copy `idl.json` to frontend
-  - [ ] Create `useProgram` hook (Anchor Provider setup)
-  - [ ] Fetch Vault Data (Read-only test)
+- [x] **Smart Contract Connection**
+  - [x] Copy `idl.json` to frontend
+  - [x] Create `useProgram` hook (Anchor Provider setup)
+  - [x] Create `useVault` hook to fetch vault data
+  - [x] Update `HeroCard` with real data (with VaultSelector for testing)
 
 ## 📅 Phase 3: Core UI Implementation
 

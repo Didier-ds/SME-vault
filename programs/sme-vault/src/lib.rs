@@ -11,7 +11,7 @@ pub use instructions::*;
 pub use state::*;
 
 // declare_id!("87oBsf59JzNKiCwqhpzKceYgJm1LnwPdnA3FxCE29D7p");
-declare_id!("FYyrCQQ2rEfZEBYDB9SqJefsfdYTWR3HdbBzexVfuKkp");
+declare_id!("A5nASa3jpqhhpSLmqWayd4GnW8RRe38LCncz5GZmT4Mi");
 
 #[program]
 pub mod sme_vault {

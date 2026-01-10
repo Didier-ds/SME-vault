@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AppWalletProvider from "@/components/providers/AppWalletProvider";
-import { PageTransition } from "@/components/ui/page-transition";
-import { AppLayout } from "@/components/layout/app-layout";
 
 export const metadata: Metadata = {
   title: "SME-Vault | Industrial Frost",
@@ -18,9 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased bg-background text-foreground">
         <AppWalletProvider>
-            <PageTransition>
-              {children}
-            </PageTransition>
+          {children}
         </AppWalletProvider>
       </body>
     </html>

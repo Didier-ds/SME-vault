@@ -5,7 +5,7 @@ import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
 import { fundWallet } from "./utils/fund-wallet";
 
-describe("nexus-treasury", () => {
+describe("sme-vault", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace.SmeVault as Program<SmeVault>;

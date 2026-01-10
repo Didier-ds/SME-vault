@@ -1,0 +1,814 @@
+{
+  "address": "A5nASa3jpqhhpSLmqWayd4GnW8RRe38LCncz5GZmT4Mi",
+  "metadata": {
+    "name": "sme_vault",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "add_approver",
+      "discriminator": [
+        213,
+        245,
+        135,
+        79,
+        129,
+        129,
+        22,
+        80
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "Vault"
+              },
+              {
+                "kind": "account",
+                "path": "vault.name",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "approver",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "add_staff",
+      "discriminator": [
+        193,
+        22,
+        157,
+        102,
+        182,
+        180,
+        167,
+        123
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "Vault"
+              },
+              {
+                "kind": "account",
+                "path": "vault.name",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "staff",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "approve_withdrawal",
+      "discriminator": [
+        75,
+        48,
+        146,
+        122,
+        201,
+        158,
+        210,
+        123
+      ],
+      "accounts": [
+        {
+          "name": "withdrawal",
+          "writable": true
+        },
+        {
+          "name": "vault"
+        },
+        {
+          "name": "approver",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_vault",
+      "discriminator": [
+        29,
+        237,
+        247,
+        208,
+        193,
+        82,
+        54,
+        135
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "approval_threshold",
+          "type": "u8"
+        },
+        {
+          "name": "daily_limit",
+          "type": "u64"
+        },
+        {
+          "name": "tx_limit",
+          "type": "u64"
+        },
+        {
+          "name": "large_withdrawal_threshold",
+          "type": "u64"
+        },
+        {
+          "name": "delay_hours",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "execute_withdrawal",
+      "discriminator": [
+        113,
+        121,
+        203,
+        232,
+        137,
+        139,
+        248,
+        249
+      ],
+      "accounts": [
+        {
+          "name": "withdrawal",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "Vault"
+              },
+              {
+                "kind": "account",
+                "path": "vault.name",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_token_account",
+          "docs": [
+            "Vault's token account (source of funds)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "destination_token_account",
+          "docs": [
+            "Destination token account (where tokens go)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "vault_authority"
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "SPL Token Program"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "executor",
+          "docs": [
+            "Person executing (anyone can execute, just pays gas)"
+          ],
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [],
+      "args": []
+    },
+    {
+      "name": "remove_approver",
+      "discriminator": [
+        214,
+        72,
+        133,
+        48,
+        50,
+        58,
+        227,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "Vault"
+              },
+              {
+                "kind": "account",
+                "path": "vault.name",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "approver",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "remove_staff",
+      "discriminator": [
+        91,
+        158,
+        191,
+        242,
+        12,
+        55,
+        167,
+        27
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "Vault"
+              },
+              {
+                "kind": "account",
+                "path": "vault.name",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "staff",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "request_withdrawal",
+      "discriminator": [
+        251,
+        85,
+        121,
+        205,
+        56,
+        201,
+        12,
+        177
+      ],
+      "accounts": [
+        {
+          "name": "withdrawal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  105,
+                  116,
+                  104,
+                  100,
+                  114,
+                  97,
+                  119,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "vault.withdrawal_count",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "Vault"
+              },
+              {
+                "kind": "account",
+                "path": "vault.name",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "requester",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "destination",
+          "type": "pubkey"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Vault",
+      "discriminator": [
+        211,
+        8,
+        232,
+        43,
+        2,
+        152,
+        117,
+        119
+      ]
+    },
+    {
+      "name": "WithdrawalRequest",
+      "discriminator": [
+        242,
+        88,
+        147,
+        173,
+        182,
+        62,
+        229,
+        193
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidName",
+      "msg": "Invalid name: Name must be between 1 and 50 characters"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidThreshold",
+      "msg": "Invalid threshold: Threshold must be > 0 and <= number of approvers"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidLimit",
+      "msg": "Invalid limit: Limit must be greater than 0"
+    },
+    {
+      "code": 6003,
+      "name": "Unauthorized",
+      "msg": "Unauthorized: You are not authorized to perform this action"
+    },
+    {
+      "code": 6004,
+      "name": "MaxApproversReached",
+      "msg": "Max approvers reached: Cannot add more than 10 approvers"
+    },
+    {
+      "code": 6005,
+      "name": "DuplicateApprover",
+      "msg": "Duplicate approver: Approver is already in the list"
+    },
+    {
+      "code": 6006,
+      "name": "ApproverNotFound",
+      "msg": "Approver not found"
+    },
+    {
+      "code": 6007,
+      "name": "MaxStaffReached",
+      "msg": "Max staff reached: Cannot add more than 20 staff members"
+    },
+    {
+      "code": 6008,
+      "name": "DuplicateStaff",
+      "msg": "Duplicate staff: Staff member is already in the list"
+    },
+    {
+      "code": 6009,
+      "name": "StaffNotFound",
+      "msg": "Staff not found"
+    },
+    {
+      "code": 6010,
+      "name": "VaultFrozen",
+      "msg": "Vault is frozen: Cannot perform this action while vault is frozen"
+    },
+    {
+      "code": 6011,
+      "name": "ExceedsLimit",
+      "msg": "Exceeds limit: Amount exceeds configured transaction limit"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidStatus",
+      "msg": "Invalid status: Operation not allowed for current withdrawal status"
+    },
+    {
+      "code": 6013,
+      "name": "AlreadyApproved",
+      "msg": "Already approved: This approver has already approved this request"
+    },
+    {
+      "code": 6014,
+      "name": "SelfApprovalNotAllowed",
+      "msg": "Self-approval not allowed: Cannot approve your own withdrawal request"
+    },
+    {
+      "code": 6015,
+      "name": "InsufficientApprovals",
+      "msg": "Insufficient approvals: Not enough approvals to execute withdrawal"
+    },
+    {
+      "code": 6016,
+      "name": "DelayNotPassed",
+      "msg": "Delay not passed: Time delay period has not elapsed yet"
+    },
+    {
+      "code": 6017,
+      "name": "InsufficientBalance",
+      "msg": "Insufficient balance: Vault does not have enough tokens"
+    },
+    {
+      "code": 6018,
+      "name": "CustomError",
+      "msg": "Custom error message"
+    }
+  ],
+  "types": [
+    {
+      "name": "Vault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "approvers",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "staff",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "approval_threshold",
+            "type": "u8"
+          },
+          {
+            "name": "daily_limit",
+            "type": "u64"
+          },
+          {
+            "name": "tx_limit",
+            "type": "u64"
+          },
+          {
+            "name": "large_withdrawal_threshold",
+            "type": "u64"
+          },
+          {
+            "name": "delay_hours",
+            "type": "u64"
+          },
+          {
+            "name": "frozen",
+            "type": "bool"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "withdrawal_count",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawalRequest",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "destination",
+            "type": "pubkey"
+          },
+          {
+            "name": "requester",
+            "type": "pubkey"
+          },
+          {
+            "name": "reason",
+            "type": "string"
+          },
+          {
+            "name": "approvals",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "WithdrawalStatus"
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "delay_until",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "executed_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawalStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pending"
+          },
+          {
+            "name": "Approved"
+          },
+          {
+            "name": "Executed"
+          },
+          {
+            "name": "Rejected"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "VAULT_SEED",
+      "type": "bytes",
+      "value": "[118, 97, 117, 108, 116]"
+    },
+    {
+      "name": "WITHDRAWAL_SEED",
+      "type": "bytes",
+      "value": "[119, 105, 116, 104, 100, 114, 97, 119, 97, 108]"
+    }
+  ]
+}
