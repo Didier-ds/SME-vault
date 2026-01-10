@@ -1,0 +1,55 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+
+# Build artifacts
+target/
+**/target/
+**/*.so
+**/*.rs.bk
+
+# Dependencies
+node_modules/
+**/node_modules/
+.yarn/
+
+# Anchor
+.anchor/
+**/.anchor/
+test-ledger/
+**/test-ledger/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.DS_Store
+.idea/
+*.swp
+*.swo
+*~
+
+# Keypairs (NEVER COMMIT THESE!)
+**/*keypair.json
+**/keypair.json
+*.key
+
+# Logs
+*.log
+validator*.log
+
+# Test artifacts
+test-ledger/
+snapshot-*/
+rocksdb/
+
+# OS
+.DS_Store
+Thumbs.db
