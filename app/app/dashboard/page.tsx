@@ -1,21 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { HeroCard } from "@/components/dashboard/hero-card";
-import { useUserVaults } from "../../src/hooks";
+import { useVaultContext } from "../../src/contexts/VaultContext";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [selectedVault, setSelectedVault] = useState<string | null>(null);
-  const { vaults, loading } = useUserVaults();
-
-  // Auto-select first vault when vaults load
-  useEffect(() => {
-    if (!loading && vaults.length > 0 && !selectedVault) {
-      setSelectedVault(vaults[0].address);
-    }
-  }, [loading, vaults.length, selectedVault]); // Fixed: use vaults.length instead of vaults
+  const { selectedVault, vaults } = useVaultContext();
 
   const handleCreateVault = () => {
     router.push("/dashboard/create-vault");

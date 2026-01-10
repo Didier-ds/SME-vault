@@ -22,7 +22,7 @@
       "@/*": ["./*"],
       "@/idl/*": ["./src/idl/*"],
       "@/types/*": ["./src/types/*"],
-      "@/hooks/*": ["./src/hooks/*"]
+      "@/hooks/*": ["./hooks/*"]
     }
   },
   "include": [

@@ -2,7 +2,21 @@
 
 import { useState } from "react";
 import { useUserVaults } from "../../src/hooks";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronsUpDown, Plus } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 
 interface VaultSwitcherProps {
   selectedVault: string | null;
@@ -12,16 +26,15 @@ interface VaultSwitcherProps {
 
 export function VaultSwitcher({ selectedVault, onVaultChange, onCreateVault }: VaultSwitcherProps) {
   const { vaults, loading } = useUserVaults();
-  const [isOpen, setIsOpen] = useState(false);
 
   // Don't render if no vaults
   if (!loading && vaults.length === 0) {
     return null;
   }
 
-  // Find selected vault name
-  const selectedVaultData = vaults.find(v => v.address === selectedVault);
-  const displayName = selectedVaultData?.name || "Select Vault";
+  // Find selected vault data
+  const activeVault = vaults.find(v => v.address === selectedVault);
+  const displayName = activeVault?.name || "Select Vault";
 
   if (loading) {
     return (
@@ -32,78 +45,67 @@ export function VaultSwitcher({ selectedVault, onVaultChange, onCreateVault }: V
   }
 
   return (
-    <div className="px-4 mb-6 relative">
-      {/* Dropdown Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 bg-sidebar-border/30 hover:bg-sidebar-border/50 rounded-lg flex items-center justify-between transition-colors group"
-      >
-        <div className="flex flex-col items-start">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">Current Vault</span>
-          <span className="text-sm font-medium text-primary mt-0.5 truncate max-w-[160px]">
-            {displayName}
-          </span>
-        </div>
-        <ChevronDown 
-          className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-10" 
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Menu */}
-          <div className="absolute top-full left-4 right-4 mt-2 bg-card border border-border rounded-lg shadow-xl z-20 overflow-hidden">
-            {/* Vault List */}
-            <div className="max-h-64 overflow-y-auto">
-              {vaults.map((vault) => (
-                <button
-                  key={vault.address}
-                  onClick={() => {
-                    onVaultChange(vault.address);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full px-4 py-3 text-left hover:bg-primary/5 transition-colors border-b border-border/50 last:border-b-0 ${
-                    vault.address === selectedVault ? 'bg-primary/10' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-medium text-primary">
-                        {vault.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {vault.approverCount} approvers · {vault.staffCount} staff
-                      </div>
-                    </div>
-                    {vault.address === selectedVault && (
-                      <div className="w-2 h-2 rounded-full bg-primary"></div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Create New Vault Button */}
-            <button
-              onClick={() => {
-                onCreateVault();
-                setIsOpen(false);
-              }}
-              className="w-full px-4 py-3 text-left hover:bg-primary/5 transition-colors border-t border-border flex items-center gap-2 text-primary"
+    <div className="px-4 mb-6">
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent border data-[state=open]:text-sidebar-accent-foreground"
+              >
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium text-primary">{displayName}</span>
+                  {activeVault && (
+                    <span className="truncate text-xs text-muted-foreground">
+                      {activeVault.approverCount} approvers · {activeVault.staffCount} staff
+                    </span>
+                  )}
+                </div>
+                <ChevronsUpDown className="ml-auto h-4 w-4 text-muted-foreground" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+              align="start"
+              side="right"
+              sideOffset={4}
             >
-              <Plus className="w-4 h-4" />
-              <span className="text-sm font-medium">Create New Vault</span>
-            </button>
-          </div>
-        </>
-      )}
+              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                Your Vaults
+              </DropdownMenuLabel>
+              {vaults.map((vault, index) => (
+                <DropdownMenuItem
+                  key={vault.address}
+                  onClick={() => onVaultChange(vault.address)}
+                  className="gap-2 p-2"
+                >
+                  <div className="flex flex-col flex-1">
+                    <span className="font-medium">{vault.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {vault.approverCount} approvers · {vault.staffCount} staff
+                    </span>
+                  </div>
+                  {vault.address === selectedVault && (
+                    <div className="w-2 h-2 rounded-full bg-primary"></div>
+                  )}
+                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={onCreateVault}
+                className="gap-2 p-2"
+              >
+                <div className="flex h-6 w-6 items-center justify-center rounded-md border bg-background">
+                  <Plus className="h-4 w-4" />
+                </div>
+                <div className="font-medium text-muted-foreground">Create New Vault</div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
     </div>
   );
 }
