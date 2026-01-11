@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { HeroCard } from "@/components/dashboard/hero-card";
+import { WithdrawalRequestsList } from "@/components/dashboard/WithdrawalRequestsList";
 import { useVaultContext } from "../../src/contexts/VaultContext";
 
 export default function DashboardPage() {
@@ -21,13 +22,11 @@ export default function DashboardPage() {
         onCreateVault={handleCreateVault}
       />
 
-      {/* Recent Transactions Placeholder */}
+      {/* Withdrawal Requests */}
       <section className="space-y-4">
-        <h3 className="text-xl font-light text-primary/80">Recent Activity</h3>
+        <h3 className="text-xl font-light text-primary/80">Withdrawal Requests</h3>
         <div className="bg-card border border-border rounded-2xl p-6 backdrop-blur-md">
-          <div className="text-muted-foreground text-center py-10 font-mono text-sm">
-            No transactions found
-          </div>
+          <WithdrawalRequestsList vaultAddress={selectedVault} />
         </div>
       </section>
     </>

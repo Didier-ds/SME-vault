@@ -19,7 +19,7 @@ export function HeroCard({ vaultAddress, hasVaults, onCreateVault }: HeroCardPro
 
   // Format balance for display
   const formattedBalance = balance > 0 
-    ? `${balance.toFixed(2)} SOL` 
+    ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
     : "$0.00";
 
   // Show create vault button if user has no vaults

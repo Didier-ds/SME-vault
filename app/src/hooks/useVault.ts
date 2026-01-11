@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useProgram } from "./useProgram";
 import { PublicKey } from "@solana/web3.js";
 import { useConnection } from "@solana/wallet-adapter-react";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
 
 import { BN } from "@coral-xyz/anchor";
 
@@ -23,11 +24,15 @@ interface VaultData {
   withdrawalCount: BN;
 }
 
+// USDC Devnet Mint Address
+const USDC_MINT_DEVNET = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+
 export function useVault(vaultAddress?: string) {
   const { program } = useProgram();
   const { connection } = useConnection();
   const [vault, setVault] = useState<VaultData | null>(null);
   const [balance, setBalance] = useState<number>(0);
+  const [tokenAccountAddress, setTokenAccountAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,9 +50,25 @@ export function useVault(vaultAddress?: string) {
         const vaultAccount = await program.account.vault.fetch(vaultPubkey);
         setVault(vaultAccount as VaultData);
 
-        // Fetch vault SOL balance
-        const vaultBalance = await connection.getBalance(vaultPubkey);
-        setBalance(vaultBalance / 1e9); // Convert lamports to SOL
+        // Calculate the vault's associated token account address
+        const vaultTokenAccount = await getAssociatedTokenAddress(
+          USDC_MINT_DEVNET,
+          vaultPubkey,
+          true // allowOwnerOffCurve - required for PDAs
+        );
+        setTokenAccountAddress(vaultTokenAccount.toString());
+
+        // Try to fetch the token account balance
+        try {
+          const tokenAccountInfo = await connection.getTokenAccountBalance(vaultTokenAccount);
+          // Convert to decimal number (USDC has 6 decimals)
+          const tokenBalance = Number(tokenAccountInfo.value.amount) / Math.pow(10, tokenAccountInfo.value.decimals);
+          setBalance(tokenBalance);
+        } catch {
+          // Token account might not exist yet (vault not funded)
+          console.log("Token account not found or not funded yet");
+          setBalance(0);
+        }
       } catch (err) {
         console.error("Error fetching vault:", err);
         setError(err instanceof Error ? err.message : "Failed to fetch vault");
@@ -62,6 +83,7 @@ export function useVault(vaultAddress?: string) {
   return {
     vault,
     balance,
+    tokenAccountAddress,
     loading,
     error,
   };
