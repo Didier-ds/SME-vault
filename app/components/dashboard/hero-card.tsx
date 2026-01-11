@@ -3,8 +3,9 @@
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useVault } from "../../src/hooks";
+import { useVault, useUserRole } from "../../src/hooks";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
 
 interface HeroCardProps {
@@ -16,11 +17,26 @@ interface HeroCardProps {
 export function HeroCard({ vaultAddress, hasVaults, onCreateVault }: HeroCardProps) {
   const { publicKey } = useWallet();
   const { vault, balance, loading, error } = useVault(vaultAddress || undefined);
+  const { roles } = useUserRole(vaultAddress || undefined);
 
   // Format balance for display
   const formattedBalance = balance > 0 
     ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
     : "$0.00";
+
+  // Role badge colors
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case "Owner":
+        return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+      case "Staff":
+        return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+      case "Approver":
+        return "bg-green-500/10 text-green-500 border-green-500/20";
+      default:
+        return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+    }
+  };
 
   // Show create vault button if user has no vaults
   if (publicKey && !hasVaults && !loading) {
@@ -77,8 +93,20 @@ export function HeroCard({ vaultAddress, hasVaults, onCreateVault }: HeroCardPro
             </span>
           )}
         </div>
-        <div className="text-muted-foreground mt-4 font-mono text-sm">
-          {vault ? vault.name : "No vault selected"}
+        <div className="flex items-center gap-2 mt-4">
+          <div className="text-muted-foreground font-mono text-sm">
+            {vault ? vault.name : "No vault selected"}
+          </div>
+          {/* Role badges */}
+          {vault && roles.filter(r => r !== "Public").length > 0 && (
+            <div className="flex gap-1">
+              {roles.filter(r => r !== "Public").map((role) => (
+                <Badge key={role} className={getRoleBadgeColor(role)}>
+                  {role}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
         {!publicKey && (
           <div className="text-xs text-muted-foreground mt-2">
@@ -98,3 +126,4 @@ export function HeroCard({ vaultAddress, hasVaults, onCreateVault }: HeroCardPro
     </Card>
   );
 }
+

@@ -28,11 +28,6 @@ export function useUserVaults() {
       return;
     }
 
-    // Don't re-fetch if we already have vaults
-    if (vaults.length > 0) {
-      return;
-    }
-
     // Prevent duplicate fetches in React Strict Mode
     if (fetchingRef.current) {
       return;
@@ -44,18 +39,35 @@ export function useUserVaults() {
       setError(null);
 
       try {
-        // Fetch all vault accounts where the owner matches the connected wallet
-        const vaultAccounts = await program.account.vault.all([
-          {
-            memcmp: {
-              offset: 8, // Skip 8-byte discriminator
-              bytes: publicKey.toBase58(), // Filter by owner
-            },
-          },
-        ]);
+        // Fetch ALL vault accounts (we'll filter client-side)
+        // This is acceptable for development/small scale (<100 vaults)
+        // For production, consider using an indexer service
+        const allVaultAccounts = await program.account.vault.all();
+
+        // Filter vaults where user has ANY role (owner, staff, or approver)
+        const userVaults = allVaultAccounts.filter((account) => {
+          const vault = account.account;
+          
+          // Check if user is owner
+          if (vault.owner.equals(publicKey)) {
+            return true;
+          }
+
+          // Check if user is in staff array
+          if (vault.staff.some((staffKey: PublicKey) => staffKey.equals(publicKey))) {
+            return true;
+          }
+
+          // Check if user is in approvers array
+          if (vault.approvers.some((approverKey: PublicKey) => approverKey.equals(publicKey))) {
+            return true;
+          }
+
+          return false;
+        });
 
         // Map to VaultInfo objects
-        const vaultInfos: VaultInfo[] = vaultAccounts.map((account) => ({
+        const vaultInfos: VaultInfo[] = userVaults.map((account) => ({
           address: account.publicKey.toString(),
           name: account.account.name,
           owner: account.account.owner,
@@ -84,3 +96,4 @@ export function useUserVaults() {
     hasVaults: vaults.length > 0,
   };
 }
+
