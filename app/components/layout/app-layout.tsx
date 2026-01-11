@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { VaultSwitcher } from "@/components/dashboard/vault-switcher";
 import { ConnectWalletButton } from "@/components/ui/connect-wallet-button";
 import { useVaultContext } from "../../src/contexts/VaultContext";
+import { LayoutDashboard, ArrowDownUp, Users, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -55,22 +56,26 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton onClick={() => router.push("/dashboard")}>
-                    Overview
+                    <LayoutDashboard className="w-4 h-4" />
+                    <span>Overview</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton>
-                    Withdrawals
+                    <ArrowDownUp className="w-4 h-4" />
+                    <span>Withdrawals</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton>
-                    Team
+                    <Users className="w-4 h-4" />
+                    <span>Team</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton>
-                    Settings
+                    <Settings className="w-4 h-4" />
+                    <span>Settings</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -109,3 +114,4 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
