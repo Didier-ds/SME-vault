@@ -61,7 +61,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton>
+                  <SidebarMenuButton onClick={() => router.push("/dashboard/withdrawals")}>
                     <ArrowDownUp className="w-4 h-4" />
                     <span>Withdrawals</span>
                   </SidebarMenuButton>

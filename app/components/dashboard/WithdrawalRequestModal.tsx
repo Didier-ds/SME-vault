@@ -100,7 +100,7 @@ export function WithdrawalRequestModal({
 
       const tx = await program.methods
         .requestWithdrawal(
-          new anchor.BN(amountNum), // Keep as whole number to match vault limit format
+          new anchor.BN(amountNum * 1_000_000), // Convert to 6 decimals for USDC
           destinationPubkey,
           reason
         )

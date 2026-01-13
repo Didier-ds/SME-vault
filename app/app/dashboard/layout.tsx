@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/layout/app-layout";
 import { VaultProvider } from "../../src/contexts/VaultContext";
+import { PageTransition } from "@/components/ui/page-transition";
 
 export default function DashboardLayout({
   children,
@@ -8,7 +9,11 @@ export default function DashboardLayout({
 }) {
   return (
     <VaultProvider>
-      <AppLayout>{children}</AppLayout>
+      <AppLayout>
+        <PageTransition>
+          {children}
+        </PageTransition>
+      </AppLayout>
     </VaultProvider>
   );
 }

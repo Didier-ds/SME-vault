@@ -149,6 +149,8 @@ export function WithdrawalCard({
     setError(null);
 
     try {
+      const provider = program.provider as anchor.AnchorProvider;
+      
       // Derive vault PDA
       const [vaultPda] = PublicKey.findProgramAddressSync(
         [
@@ -163,15 +165,43 @@ export function WithdrawalCard({
       const vaultTokenAccount = await getAssociatedTokenAddress(
         tokenMint,
         vaultPda,
-        true
+        true // allowOwnerOffCurve for vault PDA
       );
 
       // Get destination token account
       const destinationTokenAccount = await getAssociatedTokenAddress(
         tokenMint,
         withdrawal.destination,
-        true
+        true // allowOwnerOffCurve in case destination is also a vault PDA
       );
+
+      console.log("Vault Token Account:", vaultTokenAccount.toString());
+      console.log("Destination Token Account:", destinationTokenAccount.toString());
+
+      // Check if destination token account exists
+      const accountInfo = await provider.connection.getAccountInfo(destinationTokenAccount);
+      
+      if (!accountInfo) {
+        console.log("⚠️ Destination token account doesn't exist, creating it...");
+        setError("Creating destination token account...");
+        
+        const { createAssociatedTokenAccountInstruction, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } = await import("@solana/spl-token");
+        
+        const createAtaIx = createAssociatedTokenAccountInstruction(
+          currentUserPublicKey, // payer
+          destinationTokenAccount, // ata address
+          withdrawal.destination, // owner (can be PDA)
+          tokenMint, // mint
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+
+        const createAtaTx = new anchor.web3.Transaction().add(createAtaIx);
+        const signature = await provider.sendAndConfirm(createAtaTx);
+        
+        console.log("✅ Created destination token account:", signature);
+        setError(null); // Clear the status message
+      }
 
       const tx = await program.methods
         .executeWithdrawal()
@@ -187,12 +217,37 @@ export function WithdrawalCard({
         .rpc();
 
       console.log("✅ Withdrawal executed:", tx);
+      
+      // Show success toast with Solscan link
+      const solscanUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
+      const toastMessage = (
+        <div className="flex flex-col gap-1">
+          <div>Withdrawal executed successfully!</div>
+          <a 
+            href={solscanUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-xs text-blue-400 hover:underline"
+          >
+            View on Solscan →
+          </a>
+        </div>
+      );
+      
+      // Dynamic import toast
+      const { toast } = await import("sonner");
+      toast.success(toastMessage);
 
       if (onActionComplete) {
         setTimeout(onActionComplete, 1500);
       }
     } catch (err) {
       console.error("Error executing withdrawal:", err);
+      
+      // Dynamic import toast for error
+      const { toast } = await import("sonner");
+      toast.error(err instanceof Error ? err.message : "Failed to execute");
+      
       setError(err instanceof Error ? err.message : "Failed to execute");
     } finally {
       setLoading(false);

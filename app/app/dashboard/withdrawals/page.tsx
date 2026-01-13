@@ -51,7 +51,7 @@ export default function WithdrawalsPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/dashboard")}
               className="gap-2"
             >
               <ArrowLeft className="w-4 h-4" />

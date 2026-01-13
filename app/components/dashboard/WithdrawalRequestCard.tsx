@@ -1,15 +1,27 @@
 "use client";
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { WithdrawalRequest, WithdrawalStatus } from "../../src/types/withdrawal";
 import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, AlertCircle, Shield, Loader2 } from "lucide-react";
+import { useProgram, useUserRole } from "../../src/hooks";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
+import { toast } from "sonner";
 
 interface WithdrawalRequestCardProps {
   request: WithdrawalRequest;
 }
 
 export function WithdrawalRequestCard({ request }: WithdrawalRequestCardProps) {
+  const { program } = useProgram();
+  const { publicKey } = useWallet();
+  const { isApprover } = useUserRole(request.vault);
+  
+  const [loading, setLoading] = useState(false);
+
   const statusConfig = {
     [WithdrawalStatus.Pending]: {
       icon: Clock,
@@ -55,6 +67,48 @@ export function WithdrawalRequestCard({ request }: WithdrawalRequestCardProps) {
   // Calculate approval progress
   const approvalProgress = request.approvals.length;
 
+  // Check if current user can approve
+  const canApprove =
+    isApprover &&
+    publicKey &&
+    request.status === WithdrawalStatus.Pending &&
+    !request.approvals.includes(publicKey.toString()) &&
+    request.requester !== publicKey.toString();
+
+  const handleApprove = async () => {
+    if (!program || !publicKey) {
+      toast.error("Please connect your wallet");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const withdrawalPubkey = new PublicKey(request.publicKey);
+      const vaultPubkey = new PublicKey(request.vault);
+
+      const tx = await program.methods
+        .approveWithdrawal()
+        .accountsPartial({
+          withdrawal: withdrawalPubkey,
+          vault: vaultPubkey,
+          approver: publicKey,
+        })
+        .rpc();
+
+      console.log("✅ Withdrawal approved:", tx);
+      toast.success("Withdrawal approved successfully!");
+
+      // Refresh page to show update
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      console.error("Error approving withdrawal:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to approve withdrawal");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card className="p-4 border-border/50 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-colors">
       <div className="flex items-start justify-between gap-4">
@@ -95,23 +149,47 @@ export function WithdrawalRequestCard({ request }: WithdrawalRequestCardProps) {
           </div>
         </div>
 
-        {/* Right side: Timestamp */}
-        <div className="text-right text-xs text-muted-foreground space-y-1">
-          <div>Created</div>
-          <div className="font-mono">{formatDate(request.createdAt)}</div>
-          
-          {request.executedAt && (
-            <>
-              <div className="mt-2">Executed</div>
-              <div className="font-mono text-green-500/70">{formatDate(request.executedAt)}</div>
-            </>
-          )}
-          
-          {request.delayUntil && !request.executedAt && (
-            <>
-              <div className="mt-2">Executable after</div>
-              <div className="font-mono text-yellow-500/70">{formatDate(request.delayUntil)}</div>
-            </>
+        {/* Right side: Timestamp and Actions */}
+        <div className="text-right space-y-3">
+          <div className="text-xs text-muted-foreground space-y-1">
+            <div>Created</div>
+            <div className="font-mono">{formatDate(request.createdAt)}</div>
+            
+            {request.executedAt && (
+              <>
+                <div className="mt-2">Executed</div>
+                <div className="font-mono text-green-500/70">{formatDate(request.executedAt)}</div>
+              </>
+            )}
+            
+            {request.delayUntil && !request.executedAt && (
+              <>
+                <div className="mt-2">Executable after</div>
+                <div className="font-mono text-yellow-500/70">{formatDate(request.delayUntil)}</div>
+              </>
+            )}
+          </div>
+
+          {/* Approve button */}
+          {canApprove && (
+            <Button
+              onClick={handleApprove}
+              disabled={loading}
+              size="sm"
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Approving...
+                </>
+              ) : (
+                <>
+                  <Shield className="w-3 h-3" />
+                  Approve
+                </>
+              )}
+            </Button>
           )}
         </div>
       </div>
