@@ -28,9 +28,16 @@ const VaultContext = createContext<VaultContextType | undefined>(undefined);
 const USDC_MINT = new PublicKey("Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9");
 
 export function VaultProvider({ children }: { children: ReactNode }) {
-  const [selectedVault, setSelectedVault] = useState<string | null>(null);
   const { vaults, loading } = useUserVaults();
   const { connection } = useConnection();
+  
+  // Load from localStorage on mount
+  const [selectedVault, setSelectedVault] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('selectedVault');
+    }
+    return null;
+  });
   
   // Token mint state
   const [tokenMint, setTokenMint] = useState<PublicKey | null>(USDC_MINT);
@@ -38,12 +45,27 @@ export function VaultProvider({ children }: { children: ReactNode }) {
   const [decimalMultiplier, setDecimalMultiplier] = useState(1_000_000);
   const [decimalDivisor, setDecimalDivisor] = useState(1_000_000);
 
-  // Auto-select first vault when vaults load
+  // Auto-select vault: prioritize localStorage, then first vault
   useEffect(() => {
-    if (!loading && vaults.length > 0 && !selectedVault) {
-      setSelectedVault(vaults[0].address);
+    if (loading || vaults.length === 0) return;
+
+    // If we have a selected vault from localStorage, verify it exists
+    if (selectedVault) {
+      const vaultExists = vaults.some(v => v.address === selectedVault);
+      if (vaultExists) return; // Keep it
+      // Otherwise fall through to select first vault
     }
+
+    // Select first vault if no valid selection
+    setSelectedVault(vaults[0].address);
   }, [loading, vaults, selectedVault]);
+
+  // Save to localStorage whenever selection changes
+  useEffect(() => {
+    if (selectedVault && typeof window !== 'undefined') {
+      localStorage.setItem('selectedVault', selectedVault);
+    }
+  }, [selectedVault]);
 
   // Fetch token mint decimals when vault is selected
   useEffect(() => {
