@@ -86,7 +86,7 @@ export default function CreateVaultPage() {
       setError("Invalid approver address");
     }
   };
-
+ 
   const removeApprover = (index: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -171,14 +171,22 @@ export default function CreateVaultPage() {
       console.log("Token Mint:", tokenMint.toString());
       console.log("Token Account:", vaultTokenAccount.toString());
 
-      // 1. Create vault
+      // Fetch token mint info to get decimals dynamically
+      const mintInfo = await provider.connection.getParsedAccountInfo(tokenMint);
+      const mintData = mintInfo.value?.data;
+      const decimals = (mintData && 'parsed' in mintData) ? mintData.parsed.info.decimals : 6;
+      const decimalMultiplier = Math.pow(10, decimals);
+      
+      console.log(`Token decimals: ${decimals}, multiplier: ${decimalMultiplier}`);
+
+      // 1. Create vault (convert limits using actual token decimals)
       const createTx = await program.methods
         .createVault(
           formData.name,
           parseInt(formData.approvalThreshold),
-          new anchor.BN(formData.dailyLimit),
-          new anchor.BN(formData.txLimit),
-          new anchor.BN(formData.largeWithdrawalThreshold),
+          new anchor.BN(parseFloat(formData.dailyLimit) * decimalMultiplier),
+          new anchor.BN(parseFloat(formData.txLimit) * decimalMultiplier),
+          new anchor.BN(parseFloat(formData.largeWithdrawalThreshold) * decimalMultiplier),
           new anchor.BN(formData.delayHours)
         )
         .accountsPartial({

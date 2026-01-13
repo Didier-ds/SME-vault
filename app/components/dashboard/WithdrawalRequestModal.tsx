@@ -98,9 +98,21 @@ export function WithdrawalRequestModal({
         program.programId
       );
 
+      // Fetch vault to get token mint
+      const vaultAccount = await program.account.vault.fetch(vaultPubkey);
+      const tokenMint = vaultAccount.tokenMint || new PublicKey("Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9");
+      
+      // Fetch token mint info to get decimals dynamically
+      const mintInfo = await provider.connection.getParsedAccountInfo(tokenMint);
+      const mintData = mintInfo.value?.data;
+      const decimals = (mintData && 'parsed' in mintData) ? mintData.parsed.info.decimals : 6;
+      const decimalMultiplier = Math.pow(10, decimals);
+      
+      console.log(`Token decimals: ${decimals}, multiplier: ${decimalMultiplier}`);
+
       const tx = await program.methods
         .requestWithdrawal(
-          new anchor.BN(amountNum * 1_000_000), // Convert to 6 decimals for USDC
+          new anchor.BN(amountNum * decimalMultiplier), // Convert using actual token decimals
           destinationPubkey,
           reason
         )
