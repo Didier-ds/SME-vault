@@ -31,6 +31,13 @@ export function useWithdrawalRequests(vaultAddress?: string) {
         const vaultAccount = await program.account.vault.fetch(vaultPubkey);
         const withdrawalCount = (vaultAccount.withdrawalCount as BN).toNumber();
 
+        // Fetch token mint decimals for amount conversion
+        const tokenMint = new PublicKey("Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9");
+        const mintInfo = await connection.getParsedAccountInfo(tokenMint);
+        const mintData = mintInfo.value?.data;
+        const decimals = (mintData && 'parsed' in mintData) ? mintData.parsed.info.decimals : 6;
+        const divisor = Math.pow(10, decimals);
+
         if (withdrawalCount === 0) {
           setRequests([]);
           setLoading(false);
@@ -57,7 +64,7 @@ export function useWithdrawalRequests(vaultAddress?: string) {
                 vault: data.vault.toString(),
                 requester: data.requester.toString(),
                 destination: data.destination.toString(),
-                amount: (data.amount as BN).toNumber(), // Keep as whole number
+                amount: (data.amount as BN).toNumber() / divisor, // Convert using actual token decimals
                 reason: data.reason as string,
                 status: parseStatus(data.status),
                 approvals: (data.approvals as PublicKey[]).map((a) => a.toString()),
