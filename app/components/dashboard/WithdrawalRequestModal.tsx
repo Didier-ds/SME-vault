@@ -37,6 +37,7 @@ export function WithdrawalRequestModal({
   onSuccess,
 }: WithdrawalRequestModalProps) {
   const { program } = useProgram();
+  const { decimalMultiplier } = useVaultContext();
 
   const [amount, setAmount] = useState("");
   const [destination, setDestination] = useState("");

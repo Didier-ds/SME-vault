@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useProgram } from "./useProgram";
 import { PublicKey } from "@solana/web3.js";
-import { useConnection } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
 import { WithdrawalRequest, WithdrawalStatus } from "../types/withdrawal";
+import { useVaultContext } from "../contexts/VaultContext";
 
 export function useWithdrawalRequests(vaultAddress?: string) {
   const { program } = useProgram();
-  const { connection } = useConnection();
+  const { decimalDivisor } = useVaultContext();
   const [requests, setRequests] = useState<WithdrawalRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,13 +30,6 @@ export function useWithdrawalRequests(vaultAddress?: string) {
         // Fetch vault to get withdrawal count
         const vaultAccount = await program.account.vault.fetch(vaultPubkey);
         const withdrawalCount = (vaultAccount.withdrawalCount as BN).toNumber();
-
-        // Fetch token mint decimals for amount conversion
-        const tokenMint = new PublicKey("Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9");
-        const mintInfo = await connection.getParsedAccountInfo(tokenMint);
-        const mintData = mintInfo.value?.data;
-        const decimals = (mintData && 'parsed' in mintData) ? mintData.parsed.info.decimals : 6;
-        const divisor = Math.pow(10, decimals);
 
         if (withdrawalCount === 0) {
           setRequests([]);
@@ -64,7 +57,7 @@ export function useWithdrawalRequests(vaultAddress?: string) {
                 vault: data.vault.toString(),
                 requester: data.requester.toString(),
                 destination: data.destination.toString(),
-                amount: (data.amount as BN).toNumber() / divisor, // Convert using actual token decimals
+                amount: (data.amount as BN).toNumber() / decimalDivisor, // Convert using decimals from context
                 reason: data.reason as string,
                 status: parseStatus(data.status),
                 approvals: (data.approvals as PublicKey[]).map((a) => a.toString()),
@@ -92,7 +85,7 @@ export function useWithdrawalRequests(vaultAddress?: string) {
     };
 
     fetchWithdrawalRequests();
-  }, [program, vaultAddress, connection]);
+  }, [program, vaultAddress, decimalDivisor]);
 
   return {
     requests,

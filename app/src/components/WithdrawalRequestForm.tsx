@@ -10,6 +10,7 @@ import { PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { useProgram } from "@/src/hooks";
 import { Separator } from "@/components/ui/separator";
+import { useVaultContext } from "@/src/contexts/VaultContext";
 
 interface WithdrawalRequestFormProps {
   vaultAddress: string;
@@ -28,6 +29,7 @@ export function WithdrawalRequestForm({
   onSuccess,
 }: WithdrawalRequestFormProps) {
   const { program } = useProgram();
+  const { decimalMultiplier } = useVaultContext();
 
   const [amount, setAmount] = useState("");
   const [destination, setDestination] = useState("");
@@ -94,18 +96,9 @@ export function WithdrawalRequestForm({
       console.log("Amount:", amountNum);
       console.log("Destination:", destinationPubkey.toString());
 
-      // Fetch token mint decimals (using USDC devnet mint)
-      const tokenMint = new PublicKey("Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9");
-      const mintInfo = await provider.connection.getParsedAccountInfo(tokenMint);
-      const mintData = mintInfo.value?.data;
-      const decimals = (mintData && 'parsed' in mintData) ? mintData.parsed.info.decimals : 6;
-      const decimalMultiplier = Math.pow(10, decimals);
-      
-      console.log(`Token decimals: ${decimals}, multiplier: ${decimalMultiplier}`);
-
       const tx = await program.methods
         .requestWithdrawal(
-          new anchor.BN(amountNum * decimalMultiplier), // Convert using actual token decimals
+          new anchor.BN(amountNum * decimalMultiplier), // Use decimals from context
           destinationPubkey,
           reason
         )
