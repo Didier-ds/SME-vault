@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { VaultSwitcher } from "@/components/dashboard/vault-switcher";
 import { ConnectWalletButton } from "@/components/ui/connect-wallet-button";
-import { useVaultContext } from "../../src/contexts/VaultContext";
-import { LayoutDashboard, ArrowDownUp, Users, Settings } from "lucide-react";
+import { useVaultContext } from "@/src/contexts/VaultContext";
+import { LayoutDashboard, ArrowDownUp, Users, Settings, Loader2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +22,7 @@ import {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { selectedVault, setSelectedVault } = useVaultContext();
+  const { selectedVaultAddress, setSelectedVault, vaults, vaultsLoading, balanceLoading } = useVaultContext();
 
   const handleCreateVault = () => {
     router.push("/dashboard/create-vault");
@@ -43,11 +43,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Sidebar Content */}
         <SidebarContent>
           {/* Vault Switcher */}
-          <VaultSwitcher 
-            selectedVault={selectedVault}
+
+          <div className="relative">
+          <VaultSwitcher
+            selectedVault={selectedVaultAddress}
             onVaultChange={setSelectedVault}
             onCreateVault={handleCreateVault}
+            vaults={vaults}
+            loading={vaultsLoading}
           />
+          </div>
 
           {/* Navigation Menu */}
           <SidebarGroup>

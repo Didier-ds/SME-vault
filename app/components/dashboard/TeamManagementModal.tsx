@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useProgram } from "../../src/hooks";
-import { useVault } from "../../src/hooks";
+import { useVaultContext } from "../../src/contexts/VaultContext";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
@@ -15,55 +15,50 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, UserPlus, X, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface TeamManagementModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  vaultAddress: string;
 }
 
 export function TeamManagementModal({
   open,
   onOpenChange,
-  vaultAddress,
 }: TeamManagementModalProps) {
   const { program } = useProgram();
   const { publicKey } = useWallet();
-  const { vault, loading: vaultLoading } = useVault(vaultAddress);
+  const { selectedVault, vaultsLoading, refetchVaults, selectedVaultAddress } = useVaultContext();
 
   const [staffInput, setStaffInput] = useState("");
   const [approverInput, setApproverInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   // Add staff member
   const handleAddStaff = async () => {
-    if (!program || !publicKey || !vault) return;
+    if (!program || !publicKey || !selectedVault || !selectedVaultAddress) return;
 
     try {
       setLoading(true);
-      setError(null);
-      setSuccess(null);
 
       // Validate address
       const staffPubkey = new PublicKey(staffInput);
 
       // Check if already in staff
-      if (vault.staff.some((s) => s.equals(staffPubkey))) {
-        setError("Address is already a staff member");
+      if (selectedVault.staff.some((s) => s.equals(staffPubkey))) {
+        toast.error("Address is already a staff member");
         return;
       }
 
       // Check max limit
-      if (vault.staff.length >= 20) {
-        setError("Maximum staff limit (20) reached");
+      if (selectedVault.staff.length >= 20) {
+        toast.error("Maximum staff limit (20) reached");
         return;
       }
 
       // Call add_staff instruction
-      const vaultPubkey = new PublicKey(vaultAddress);
-      await program.methods
+      const vaultPubkey = new PublicKey(selectedVaultAddress);
+      const signature = await program.methods
         .addStaff(staffPubkey)
         .accounts({
           vault: vaultPubkey,
@@ -71,14 +66,17 @@ export function TeamManagementModal({
         })
         .rpc();
 
-      setSuccess("Staff member added successfully!");
+      console.log("✅ Staff added, tx:", signature);
+
+      toast.success("Staff member added successfully!");
       setStaffInput("");
       
-      // Refresh vault data
-      setTimeout(() => window.location.reload(), 1500);
+      // Trigger vault data refetch immediately
+      console.log("🔄 Triggering global refetch after add staff...");
+      refetchVaults();
     } catch (err) {
       console.error("Error adding staff:", err);
-      setError(err instanceof Error ? err.message : "Failed to add staff member");
+      toast.error(err instanceof Error ? err.message : "Failed to add staff member");
     } finally {
       setLoading(false);
     }
@@ -86,30 +84,28 @@ export function TeamManagementModal({
 
   // Add approver
   const handleAddApprover = async () => {
-    if (!program || !publicKey || !vault) return;
+    if (!program || !publicKey || !selectedVault || !selectedVaultAddress) return;
 
     try {
       setLoading(true);
-      setError(null);
-      setSuccess(null);
 
       // Validate address
       const approverPubkey = new PublicKey(approverInput);
 
       // Check if already in approvers
-      if (vault.approvers.some((a) => a.equals(approverPubkey))) {
-        setError("Address is already an approver");
+      if (selectedVault.approvers.some((a) => a.equals(approverPubkey))) {
+        toast.error("Address is already an approver");
         return;
       }
 
       // Check max limit
-      if (vault.approvers.length >= 10) {
-        setError("Maximum approver limit (10) reached");
+      if (selectedVault.approvers.length >= 10) {
+        toast.error("Maximum approver limit (10) reached");
         return;
       }
 
       // Call add_approver instruction
-      const vaultPubkey = new PublicKey(vaultAddress);
+      const vaultPubkey = new PublicKey(selectedVaultAddress);
       await program.methods
         .addApprover(approverPubkey)
         .accounts({
@@ -118,14 +114,15 @@ export function TeamManagementModal({
         })
         .rpc();
 
-      setSuccess("Approver added successfully!");
+      toast.success("Approver added successfully!");
       setApproverInput("");
-      
-      // Refresh vault data
-      setTimeout(() => window.location.reload(), 1500);
+
+      // Trigger vault data refetch immediately
+      console.log("🔄 Triggering global refetch after add approver...");
+      refetchVaults();
     } catch (err) {
       console.error("Error adding approver:", err);
-      setError(err instanceof Error ? err.message : "Failed to add approver");
+      toast.error(err instanceof Error ? err.message : "Failed to add approver");
     } finally {
       setLoading(false);
     }
@@ -133,15 +130,13 @@ export function TeamManagementModal({
 
   // Remove staff member
   const handleRemoveStaff = async (staffPubkey: PublicKey) => {
-    if (!program || !publicKey) return;
+    if (!program || !publicKey || !selectedVaultAddress) return;
 
     try {
       setLoading(true);
-      setError(null);
-      setSuccess(null);
 
-      const vaultPubkey = new PublicKey(vaultAddress);
-      await program.methods
+      const vaultPubkey = new PublicKey(selectedVaultAddress);
+      const signature = await program.methods
         .removeStaff(staffPubkey)
         .accounts({
           vault: vaultPubkey,
@@ -149,13 +144,16 @@ export function TeamManagementModal({
         })
         .rpc();
 
-      setSuccess("Staff member removed successfully!");
+      console.log("✅ Staff removed, tx:", signature);
+
+      toast.success("Staff member removed successfully!");
       
-      // Refresh vault data
-      setTimeout(() => window.location.reload(), 1500);
+      // Trigger global refetch immediately
+      console.log("🔄 Triggering global refetch after remove staff...");
+      refetchVaults();
     } catch (err) {
       console.error("Error removing staff:", err);
-      setError(err instanceof Error ? err.message : "Failed to remove staff member");
+      toast.error(err instanceof Error ? err.message : "Failed to remove staff member");
     } finally {
       setLoading(false);
     }
@@ -163,21 +161,19 @@ export function TeamManagementModal({
 
   // Remove approver
   const handleRemoveApprover = async (approverPubkey: PublicKey) => {
-    if (!program || !publicKey || !vault) return;
+    if (!program || !publicKey || !selectedVault || !selectedVaultAddress) return;
 
     try {
       setLoading(true);
-      setError(null);
-      setSuccess(null);
 
       // Check if removing would break approval threshold
-      if (vault.approvers.length <= vault.approvalThreshold) {
-        setError(`Cannot remove approver: would break approval threshold (${vault.approvalThreshold})`);
+      if (selectedVault.approvers.length <= selectedVault.approvalThreshold) {
+        toast.error(`Cannot remove approver: would break approval threshold (${selectedVault.approvalThreshold})`);
         return;
       }
 
-      const vaultPubkey = new PublicKey(vaultAddress);
-      await program.methods
+      const vaultPubkey = new PublicKey(selectedVaultAddress);
+      const signature = await program.methods
         .removeApprover(approverPubkey)
         .accounts({
           vault: vaultPubkey,
@@ -185,13 +181,16 @@ export function TeamManagementModal({
         })
         .rpc();
 
-      setSuccess("Approver removed successfully!");
+      console.log("✅ Approver removed, tx:", signature);
+
+      toast.success("Approver removed successfully!");
       
-      // Refresh vault data
-      setTimeout(() => window.location.reload(), 1500);
+      // Trigger global refetch immediately
+      console.log("🔄 Triggering global refetch after remove approver...");
+      refetchVaults();
     } catch (err) {
       console.error("Error removing approver:", err);
-      setError(err instanceof Error ? err.message : "Failed to remove approver");
+      toast.error(err instanceof Error ? err.message : "Failed to remove approver");
     } finally {
       setLoading(false);
     }
@@ -202,7 +201,7 @@ export function TeamManagementModal({
     return `${str.slice(0, 4)}...${str.slice(-4)}`;
   };
 
-  if (vaultLoading || !vault) {
+  if (vaultsLoading || !selectedVault) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
@@ -227,25 +226,13 @@ export function TeamManagementModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Error/Success Messages */}
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="bg-green-500/10 border border-green-500/20 text-green-500 p-3 rounded-lg text-sm">
-            {success}
-          </div>
-        )}
-
         <div className="space-y-6">
           {/* Staff Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Staff Members</h3>
               <span className="text-sm text-muted-foreground">
-                {vault.staff.length}/20
+                {selectedVault.staff.length}/20
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -254,12 +241,12 @@ export function TeamManagementModal({
 
             {/* Staff List */}
             <div className="space-y-2">
-              {vault.staff.length === 0 ? (
+              {selectedVault.staff.length === 0 ? (
                 <div className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
                   No staff members yet
                 </div>
               ) : (
-                vault.staff.map((staff) => (
+                selectedVault.staff.map((staff) => (
                   <div
                     key={staff.toString()}
                     className="flex items-center justify-between p-3 border border-border rounded-lg bg-white/5"
@@ -307,21 +294,21 @@ export function TeamManagementModal({
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Approvers</h3>
               <span className="text-sm text-muted-foreground">
-                {vault.approvers.length}/10
+                {selectedVault.approvers.length}/10
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
-              People who can approve withdrawal requests (threshold: {vault.approvalThreshold})
+              People who can approve withdrawal requests (threshold: {selectedVault.approvalThreshold})
             </p>
 
             {/* Approvers List */}
             <div className="space-y-2">
-              {vault.approvers.length === 0 ? (
+              {selectedVault.approvers.length === 0 ? (
                 <div className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
                   No approvers yet
                 </div>
               ) : (
-                vault.approvers.map((approver) => (
+                selectedVault.approvers.map((approver) => (
                   <div
                     key={approver.toString()}
                     className="flex items-center justify-between p-3 border border-border rounded-lg bg-white/5"

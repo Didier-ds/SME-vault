@@ -2,12 +2,12 @@
 
 import { useMemo } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useVault } from "./useVault";
+import { useVaultContext } from "../contexts/VaultContext";
 import { UserRole } from "../types/role";
 
-export function useUserRole(vaultAddress?: string) {
+export function useUserRole() {
   const { publicKey } = useWallet();
-  const { vault, loading } = useVault(vaultAddress);
+  const { selectedVault: vault, vaultsLoading: loading } = useVaultContext();
 
   const roleInfo = useMemo(() => {
     // No wallet connected

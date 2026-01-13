@@ -27,7 +27,7 @@ export interface WithdrawalRequest {
   bump: number;
 }
 
-export function useWithdrawals(vaultAddress?: string) {
+export function  useWithdrawals(vaultAddress?: string) {
   const { program } = useProgram();
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [loading, setLoading] = useState(false);

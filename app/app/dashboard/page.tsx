@@ -7,15 +7,14 @@ import { WithdrawalRequestsList } from "@/components/dashboard/WithdrawalRequest
 import { TeamManagementModal } from "@/components/dashboard/TeamManagementModal";
 import { WithdrawalRequestModal } from "@/components/dashboard/WithdrawalRequestModal";
 import { useVaultContext } from "../../src/contexts/VaultContext";
-import { useUserRole, useVault } from "../../src/hooks";
+import { useUserRole } from "../../src/hooks";
 import { Button } from "@/components/ui/button";
 import { Users, Send } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { selectedVault, vaults } = useVaultContext();
-  const { vault } = useVault(selectedVault || undefined);
-  const { isOwner, isStaff } = useUserRole(selectedVault || undefined);
+  const { selectedVaultAddress, vaults, selectedVault, vaultBalance: balance, vaultTokenAccount: tokenAccountAddress, vaultsLoading: loading, vaultError: error } = useVaultContext();
+  const { isOwner, isStaff } = useUserRole();
   const [teamModalOpen, setTeamModalOpen] = useState(false);
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
 
@@ -30,18 +29,23 @@ export default function DashboardPage() {
   return (
     <>
       {/* Hero Card Component */}
-      <HeroCard 
-        vaultAddress={selectedVault}
+      <HeroCard
+        vaultAddress={selectedVaultAddress}
         hasVaults={vaults.length > 0}
         onCreateVault={handleCreateVault}
+        vault={selectedVault}
+        balance={balance}
+        tokenAccountAddress={tokenAccountAddress}
+        loading={loading}
+        error={error}
       />
 
       {/* Action Buttons */}
-      {selectedVault && (
+      {selectedVaultAddress && (
         <div className="flex gap-3 justify-end">
-          {isStaff && vault && (
-            <Button 
-              onClick={() => setWithdrawalModalOpen(true)} 
+          {isStaff && selectedVault && (
+            <Button
+              onClick={() => setWithdrawalModalOpen(true)}
               className="gap-2"
               variant="default"
             >
@@ -50,8 +54,8 @@ export default function DashboardPage() {
             </Button>
           )}
           {isOwner && (
-            <Button 
-              onClick={() => setTeamModalOpen(true)} 
+            <Button
+              onClick={() => setTeamModalOpen(true)}
               className="gap-2"
               variant="outline"
             >
@@ -66,28 +70,27 @@ export default function DashboardPage() {
       <section className="space-y-4">
         <h3 className="text-xl font-light text-primary/80">Withdrawal Requests</h3>
         <div className="bg-card border border-border rounded-2xl p-6 backdrop-blur-md">
-          <WithdrawalRequestsList vaultAddress={selectedVault} />
+          <WithdrawalRequestsList vaultAddress={selectedVaultAddress} />
         </div>
       </section>
 
       {/* Modals */}
-      {selectedVault && (
+      {selectedVaultAddress && (
         <>
           <TeamManagementModal
             open={teamModalOpen}
             onOpenChange={setTeamModalOpen}
-            vaultAddress={selectedVault}
           />
-          {vault && (
+          {selectedVault && (
             <WithdrawalRequestModal
               open={withdrawalModalOpen}
               onOpenChange={setWithdrawalModalOpen}
-              vaultAddress={selectedVault}
+              vaultAddress={selectedVaultAddress}
               vaultData={{
-                txLimit: vault.txLimit,
-                largeWithdrawalThreshold: vault.largeWithdrawalThreshold,
-                delayHours: vault.delayHours,
-                withdrawalCount: vault.withdrawalCount,
+                txLimit: selectedVault.txLimit,
+                largeWithdrawalThreshold: selectedVault.largeWithdrawalThreshold,
+                delayHours: selectedVault.delayHours,
+                withdrawalCount: selectedVault.withdrawalCount,
               }}
               onSuccess={handleRefresh}
             />

@@ -1,109 +1,131 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useUserVaults } from "../hooks";
-import { PublicKey } from "@solana/web3.js";
+import type { VaultContextType } from "../types/vault";
+import { useVaults } from "../hooks/useVaults";
 import { useConnection } from "@solana/wallet-adapter-react";
-
-interface VaultContextType {
-  selectedVault: string | null;
-  setSelectedVault: (address: string | null) => void;
-  vaults: Array<{
-    address: string;
-    name: string;
-    approverCount: number;
-    staffCount: number;
-  }>;
-  loading: boolean;
-  // Token mint details
-  tokenMint: PublicKey | null;
-  tokenDecimals: number;
-  decimalMultiplier: number;
-  decimalDivisor: number;
-}
+import { useMemo, useState, useEffect, createContext, useContext } from "react";
 
 const VaultContext = createContext<VaultContextType | undefined>(undefined);
 
-// USDC Devnet mint constant
-const USDC_MINT = new PublicKey("Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9");
-
-export function VaultProvider({ children }: { children: ReactNode }) {
-  const { vaults, loading } = useUserVaults();
+export function VaultProvider({ children }: { children: React.ReactNode }) {
   const { connection } = useConnection();
-  
-  // Load from localStorage on mount
-  const [selectedVault, setSelectedVault] = useState<string | null>(() => {
+
+  // Internal state for user-selected vault address (what user explicitly chose)
+  const [userSelectedVaultAddress, setUserSelectedVaultAddress] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('selectedVault');
     }
     return null;
   });
-  
-  // Token mint state
-  const [tokenMint, setTokenMint] = useState<PublicKey | null>(USDC_MINT);
+
+  // Compute effective selected vault address (auto-select first if none chosen)
+  // This is computed BEFORE calling useVaults so we can pass it as parameter
+  const selectedVaultAddress = useMemo(() => {
+    // We'll compute this after we have vaults, so we need a stable value here
+    return userSelectedVaultAddress;
+  }, [userSelectedVaultAddress]);
+
+  // Use combined hook - fetches all vaults + balance for selected
+  const {
+    vaults,
+    vaultsLoading,
+    vaultsError,
+    refetchVaults,
+    selectedVaultBalance,
+    selectedVaultTokenAccount,
+    balanceLoading,
+    balanceError,
+    refetchBalance,
+  } = useVaults(selectedVaultAddress);
+
+  // Compute effective selected vault address (auto-select first if none chosen)
+  const effectiveSelectedVaultAddress = useMemo(() => {
+    if (vaultsLoading || vaults.length === 0) return null;
+
+    // If user has selected a vault, verify it still exists
+    if (userSelectedVaultAddress) {
+      const vaultExists = vaults.some(v => v.address === userSelectedVaultAddress);
+      if (vaultExists) return userSelectedVaultAddress;
+    }
+
+    // Auto-select first vault (safe because we checked length above)
+    return vaults[0]?.address ?? null;
+  }, [vaultsLoading, vaults, userSelectedVaultAddress]);
+
+  // Compute selectedVault by filtering from vaults array (no separate fetch!)
+  const selectedVault = useMemo(() => {
+    if (!effectiveSelectedVaultAddress || vaults.length === 0) return null;
+    return vaults.find(v => v.address === effectiveSelectedVaultAddress) ?? null;
+  }, [effectiveSelectedVaultAddress, vaults]);
+
+  // Wrapper function to set vault and save to localStorage
+  const setSelectedVault = (address: string | null) => {
+    setUserSelectedVaultAddress(address);
+    if (address && typeof window !== 'undefined') {
+      localStorage.setItem('selectedVault', address);
+    }
+  };
+
+  // Compute tokenMint from selectedVault (derived property)
+  const tokenMint = useMemo(() => selectedVault?.tokenMint ?? null, [selectedVault]);
+
+  // Token decimals state (needs to be fetched async)
   const [tokenDecimals, setTokenDecimals] = useState(6);
-  const [decimalMultiplier, setDecimalMultiplier] = useState(1_000_000);
-  const [decimalDivisor, setDecimalDivisor] = useState(1_000_000);
 
-  // Auto-select vault: prioritize localStorage, then first vault
+  // Fetch token decimals when tokenMint changes
   useEffect(() => {
-    if (loading || vaults.length === 0) return;
-
-    // If we have a selected vault from localStorage, verify it exists
-    if (selectedVault) {
-      const vaultExists = vaults.some(v => v.address === selectedVault);
-      if (vaultExists) return; // Keep it
-      // Otherwise fall through to select first vault
-    }
-
-    // Select first vault if no valid selection
-    setSelectedVault(vaults[0].address);
-  }, [loading, vaults, selectedVault]);
-
-  // Save to localStorage whenever selection changes
-  useEffect(() => {
-    if (selectedVault && typeof window !== 'undefined') {
-      localStorage.setItem('selectedVault', selectedVault);
-    }
-  }, [selectedVault]);
-
-  // Fetch token mint decimals when vault is selected
-  useEffect(() => {
-    const fetchTokenDecimals = async () => {
-      if (!selectedVault || !connection) return;
+    async function loadTokenDecimals() {
+      if (!tokenMint || !connection) {
+        setTokenDecimals(6); // Default to 6 decimals
+        return;
+      }
 
       try {
-        const mintInfo = await connection.getParsedAccountInfo(USDC_MINT);
-        const mintData = mintInfo.value?.data;
-        const decimals = (mintData && 'parsed' in mintData) ? mintData.parsed.info.decimals : 6;
-        
-        setTokenMint(USDC_MINT);
-        setTokenDecimals(decimals);
-        setDecimalMultiplier(Math.pow(10, decimals));
-        setDecimalDivisor(Math.pow(10, decimals));
-        
-        console.log(`VaultContext: Loaded token decimals: ${decimals}`);
-      } catch (err) {
-        console.error("Error fetching token decimals:", err);
-      }
-    };
+        // Get mint info to find decimals
+        const mintInfo = await connection.getParsedAccountInfo(tokenMint);
+        const decimals = (mintInfo.value?.data as { parsed?: { info?: { decimals?: number } } })?.parsed?.info?.decimals || 6;
 
-    fetchTokenDecimals();
-  }, [selectedVault, connection]);
+        console.log(`VaultContext: Loaded token mint ${tokenMint.toString()} with ${decimals} decimals`);
+
+        setTokenDecimals(decimals);
+      } catch (err) {
+        console.error("Error loading token decimals:", err);
+        setTokenDecimals(6); // Fallback to 6 decimals
+      }
+    }
+
+    loadTokenDecimals();
+  }, [tokenMint, connection]);
+
+  // Compute multiplier and divisor from decimals (derived properties)
+  const decimalMultiplier = useMemo(() => Math.pow(10, tokenDecimals), [tokenDecimals]);
+  const decimalDivisor = useMemo(() => Math.pow(10, tokenDecimals), [tokenDecimals]);
+
+  const value: VaultContextType = {
+    // Vault selection
+    selectedVaultAddress: effectiveSelectedVaultAddress,
+    setSelectedVault,
+    vaults,
+    vaultsLoading,
+
+    // Vault data (single source of truth)
+    selectedVault,
+    vaultBalance: selectedVaultBalance,
+    vaultTokenAccount: selectedVaultTokenAccount,
+    balanceLoading,
+    vaultError: vaultsError || balanceError,
+    refetchVaults,
+    refetchBalance,
+
+    // Computed token properties
+    tokenMint,
+    tokenDecimals,
+    decimalMultiplier,
+    decimalDivisor,
+  };
 
   return (
-    <VaultContext.Provider 
-      value={{ 
-        selectedVault, 
-        setSelectedVault, 
-        vaults, 
-        loading,
-        tokenMint,
-        tokenDecimals,
-        decimalMultiplier,
-        decimalDivisor,
-      }}
-    >
+    <VaultContext.Provider value={value}>
       {children}
     </VaultContext.Provider>
   );

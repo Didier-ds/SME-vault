@@ -3,22 +3,38 @@
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useVault, useUserRole } from "../../src/hooks";
+import { useUserRole } from "../../src/hooks";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Copy, Check, Users, Shield, TrendingUp } from "lucide-react";
+import { VaultData } from "../../src/hooks/useVault";
 import { useState } from "react";
 
 interface HeroCardProps {
   vaultAddress: string | null;
   hasVaults: boolean;
   onCreateVault: () => void;
+  // New props passed from parent
+  vault: VaultData | null;
+  balance: number;
+  tokenAccountAddress: string | null;
+  loading: boolean;
+  error: string | null;
 }
 
-export function HeroCard({ vaultAddress, hasVaults, onCreateVault }: HeroCardProps) {
+export function HeroCard({ 
+  vaultAddress, 
+  hasVaults, 
+  onCreateVault,
+  vault,
+  balance,
+  tokenAccountAddress,
+  loading,
+  error
+}: HeroCardProps) {
   const { publicKey } = useWallet();
-  const { vault, balance, tokenAccountAddress, loading, error } = useVault(vaultAddress || undefined);
-  const { roles } = useUserRole(vaultAddress || undefined);
+  // Removed internal useVault hook to avoid duplicate state
+  const { roles } = useUserRole();
   const [copied, setCopied] = useState(false);
 
   // Format balance for display

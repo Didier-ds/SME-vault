@@ -1,18 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useProgram } from "./useProgram";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-
-interface VaultInfo {
-  address: string;
-  name: string;
-  owner: PublicKey;
-  approvalThreshold: number;
-  staffCount: number;
-  approverCount: number;
-}
+import type { VaultInfo } from "../types/vault";
 
 export function useUserVaults() {
   const { program } = useProgram();
@@ -22,9 +14,10 @@ export function useUserVaults() {
   const [error, setError] = useState<string | null>(null);
   const fetchingRef = useRef(false);
 
-  useEffect(() => {
+  const fetchUserVaults = useCallback(async () => {
     if (!program || !publicKey) {
       setVaults([]);
+      setLoading(false);
       return;
     }
 
@@ -33,67 +26,65 @@ export function useUserVaults() {
       return;
     }
 
-    const fetchUserVaults = async () => {
-      fetchingRef.current = true;
-      setLoading(true);
-      setError(null);
+    fetchingRef.current = true;
+    setLoading(true);
+    setError(null);
 
-      try {
-        // Fetch ALL vault accounts (we'll filter client-side)
-        // This is acceptable for development/small scale (<100 vaults)
-        // For production, consider using an indexer service
-        const allVaultAccounts = await program.account.vault.all();
-
-        // Filter vaults where user has ANY role (owner, staff, or approver)
-        const userVaults = allVaultAccounts.filter((account) => {
-          const vault = account.account;
-          
-          // Check if user is owner
-          if (vault.owner.equals(publicKey)) {
-            return true;
+    try {
+      // Fetch vaults where the user is the owner
+      // Filter by account size to only get vaults with the new structure (includes token_mint)
+      const ownedVaultAccounts = await program.account.vault.all([
+        {
+          memcmp: {
+            offset: 8, // After discriminator
+            bytes: publicKey.toBase58(),
           }
+        },
+        {
+          dataSize: 1145, // New vault size with token_mint field (32 bytes larger than old 1113)
+        }
+      ]);
 
-          // Check if user is in staff array
-          if (vault.staff.some((staffKey: PublicKey) => staffKey.equals(publicKey))) {
-            return true;
-          }
+      console.log(`Found ${ownedVaultAccounts.length} vaults owned by user`);
 
-          // Check if user is in approvers array
-          if (vault.approvers.some((approverKey: PublicKey) => approverKey.equals(publicKey))) {
-            return true;
-          }
+      // Filter vaults where user has ANY role (owner, staff, or approver)
+      // Since we're already filtering by owner above, we also need to fetch
+      // vaults where user is staff or approver separately
+      // For now, just show owned vaults
+      const userVaults = ownedVaultAccounts;
 
-          return false;
-        });
+      // Map to VaultInfo objects
+      const vaultInfos: VaultInfo[] = userVaults.map((account) => ({
+        address: account.publicKey.toString(),
+        name: account.account.name,
+        owner: account.account.owner,
+        approvalThreshold: account.account.approvalThreshold,
+        staffCount: account.account.staff.length,
+        approverCount: account.account.approvers.length,
+      }));
+      
+      // debugger
 
-        // Map to VaultInfo objects
-        const vaultInfos: VaultInfo[] = userVaults.map((account) => ({
-          address: account.publicKey.toString(),
-          name: account.account.name,
-          owner: account.account.owner,
-          approvalThreshold: account.account.approvalThreshold,
-          staffCount: account.account.staff.length,
-          approverCount: account.account.approvers.length,
-        }));
-
-        setVaults(vaultInfos);
-      } catch (err) {
-        console.error("Error fetching user vaults:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch vaults");
-      } finally {
-        setLoading(false);
-        fetchingRef.current = false;
-      }
-    };
-
-    fetchUserVaults();
+      setVaults(vaultInfos);
+    } catch (err) {
+      console.error("Error fetching user vaults:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch vaults");
+    } finally {
+      setLoading(false);
+      fetchingRef.current = false;
+    }
   }, [program, publicKey]);
+
+  useEffect(() => {
+    fetchUserVaults();
+  }, [fetchUserVaults]);
 
   return {
     vaults,
     loading,
     error,
     hasVaults: vaults.length > 0,
+    refetch: fetchUserVaults,
   };
 }
 

@@ -13,6 +13,7 @@ pub fn handler(ctx: Context<CreateVault>, name: String, approval_threshold: u8, 
     let vault = &mut ctx.accounts.vault;
 
     vault.owner = ctx.accounts.owner.key();
+    vault.token_mint = ctx.accounts.token_mint.key();
     vault.name = name;
     vault.approvers = Vec::new();
     vault.staff = Vec::new();

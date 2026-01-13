@@ -5,6 +5,7 @@ use anchor_lang::prelude::*;
 #[derive(Debug)]
 pub struct Vault {
     pub owner: Pubkey,
+    pub token_mint: Pubkey,
     #[max_len(50)]
     pub name: String,
     #[max_len(10)]

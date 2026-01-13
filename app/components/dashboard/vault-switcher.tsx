@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useUserVaults } from "../../src/hooks";
+import { useMemo } from "react";
 import { ChevronsUpDown, Plus } from "lucide-react";
+import type { VaultWithMetadata } from "../../src/types/vault";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,21 +22,30 @@ interface VaultSwitcherProps {
   selectedVault: string | null;
   onVaultChange: (vaultAddress: string) => void;
   onCreateVault: () => void;
+  vaults: VaultWithMetadata[];
+  loading: boolean;
 }
 
-export function VaultSwitcher({ selectedVault, onVaultChange, onCreateVault }: VaultSwitcherProps) {
-  const { vaults, loading } = useUserVaults();
+export function VaultSwitcher({ 
+  selectedVault, 
+  onVaultChange, 
+  onCreateVault,
+  vaults,
+  loading
+}: VaultSwitcherProps) {
+  // Computed property: Find selected vault data
+  const activeVault = useMemo(() => {
+    return vaults.find(v => v.address === selectedVault);
+  }, [vaults, selectedVault]);
+
+  const displayName = activeVault?.name || "Select Vault";
 
   // Don't render if no vaults
   if (!loading && vaults.length === 0) {
     return null;
   }
 
-  // Find selected vault data
-  const activeVault = vaults.find(v => v.address === selectedVault);
-  const displayName = activeVault?.name || "Select Vault";
-
-  if (loading) {
+  if (loading && vaults.length === 0) {
     return (
       <div className="px-4 py-3 mb-6">
         <div className="animate-pulse bg-primary/10 h-10 rounded-lg"></div>
@@ -58,7 +67,7 @@ export function VaultSwitcher({ selectedVault, onVaultChange, onCreateVault }: V
                   <span className="truncate font-medium text-primary">{displayName}</span>
                   {activeVault && (
                     <span className="truncate text-xs text-muted-foreground">
-                      {activeVault.approverCount} approvers · {activeVault.staffCount} staff
+                      {activeVault.approvers.length} approvers · {activeVault.staff.length} staff
                     </span>
                   )}
                 </div>
@@ -83,7 +92,7 @@ export function VaultSwitcher({ selectedVault, onVaultChange, onCreateVault }: V
                   <div className="flex flex-col flex-1">
                     <span className="font-medium">{vault.name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {vault.approverCount} approvers · {vault.staffCount} staff
+                      {vault.approvers.length} approvers · {vault.staff.length} staff
                     </span>
                   </div>
                   {vault.address === selectedVault && (

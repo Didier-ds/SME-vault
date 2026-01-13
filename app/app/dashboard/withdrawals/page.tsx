@@ -6,7 +6,7 @@ import { WithdrawalCard } from "@/src/components/WithdrawalCard";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVaultContext } from "@/src/contexts/VaultContext";
-import { useVault, useWithdrawals, useUserRole } from "@/src/hooks";
+import { useWithdrawals, useUserRole } from "@/src/hooks";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { AlertCircle, Inbox, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,16 +14,15 @@ import { PublicKey } from "@solana/web3.js";
 
 export default function WithdrawalsPage() {
   const router = useRouter();
-  const { selectedVault } = useVaultContext();
-  const { vault, loading: vaultLoading } = useVault(selectedVault || undefined);
+  const { selectedVaultAddress, selectedVault, vaultsLoading, tokenMint } = useVaultContext();
   const { publicKey } = useWallet();
-  const { isStaff, isApprover } = useUserRole(selectedVault || undefined);
+  const { isStaff, isApprover } = useUserRole();
 
   const { pending, approved, executed, loading, error } = useWithdrawals(
-    selectedVault || undefined
+    selectedVaultAddress || undefined
   );
 
-  if (!selectedVault) {
+  if (!selectedVaultAddress) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
@@ -38,9 +37,6 @@ export default function WithdrawalsPage() {
   const handleRefresh = () => {
     window.location.reload();
   };
-
-  // Hardcoded token mint for now - should come from vault data
-  const tokenMint = new PublicKey("Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9");
 
   return (
     <>
@@ -69,14 +65,14 @@ export default function WithdrawalsPage() {
 
       <div className="space-y-6">
         {/* Create Withdrawal Request Form (Staff only) */}
-        {isStaff && vault && (
+        {isStaff && selectedVault && (
           <WithdrawalRequestForm
-            vaultAddress={selectedVault}
+            vaultAddress={selectedVaultAddress}
             vaultData={{
-              txLimit: vault.txLimit,
-              largeWithdrawalThreshold: vault.largeWithdrawalThreshold,
-              delayHours: vault.delayHours,
-              withdrawalCount: vault.withdrawalCount,
+              txLimit: selectedVault.txLimit,
+              largeWithdrawalThreshold: selectedVault.largeWithdrawalThreshold,
+              delayHours: selectedVault.delayHours,
+              withdrawalCount: selectedVault.withdrawalCount,
             }}
             onSuccess={handleRefresh}
           />
@@ -85,7 +81,7 @@ export default function WithdrawalsPage() {
         {/* Pending Withdrawals */}
         <div>
           <h2 className="text-2xl font-semibold mb-4">Pending Requests</h2>
-          {loading || vaultLoading ? (
+          {loading || vaultsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-48 w-full" />
@@ -108,10 +104,10 @@ export default function WithdrawalsPage() {
                   key={withdrawal.publicKey.toString()}
                   withdrawal={withdrawal}
                   vaultData={{
-                    approvalThreshold: vault?.approvalThreshold || 1,
-                    owner: vault?.owner || PublicKey.default,
-                    name: vault?.name || "",
-                    bump: vault?.bump || 0,
+                    approvalThreshold: selectedVault?.approvalThreshold || 1,
+                    owner: selectedVault?.owner || PublicKey.default,
+                    name: selectedVault?.name || "",
+                    bump: selectedVault?.bump || 0,
                   }}
                   tokenMint={tokenMint}
                   currentUserIsApprover={isApprover}
@@ -133,10 +129,10 @@ export default function WithdrawalsPage() {
                   key={withdrawal.publicKey.toString()}
                   withdrawal={withdrawal}
                   vaultData={{
-                    approvalThreshold: vault?.approvalThreshold || 1,
-                    owner: vault?.owner || PublicKey.default,
-                    name: vault?.name || "",
-                    bump: vault?.bump || 0,
+                    approvalThreshold: selectedVault?.approvalThreshold || 1,
+                    owner: selectedVault?.owner || PublicKey.default,
+                    name: selectedVault?.name || "",
+                    bump: selectedVault?.bump || 0,
                   }}
                   tokenMint={tokenMint}
                   currentUserIsApprover={isApprover}
@@ -158,10 +154,10 @@ export default function WithdrawalsPage() {
                   key={withdrawal.publicKey.toString()}
                   withdrawal={withdrawal}
                   vaultData={{
-                    approvalThreshold: vault?.approvalThreshold || 1,
-                    owner: vault?.owner || PublicKey.default,
-                    name: vault?.name || "",
-                    bump: vault?.bump || 0,
+                    approvalThreshold: selectedVault?.approvalThreshold || 1,
+                    owner: selectedVault?.owner || PublicKey.default,
+                    name: selectedVault?.name || "",
+                    bump: selectedVault?.bump || 0,
                   }}
                   tokenMint={tokenMint}
                   currentUserIsApprover={isApprover}
