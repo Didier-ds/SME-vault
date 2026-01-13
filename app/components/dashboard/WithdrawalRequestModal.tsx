@@ -15,6 +15,7 @@ import { Loader2, Send, AlertCircle } from "lucide-react";
 import { PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { useProgram } from "@/src/hooks";
+import { useVaultContext } from "@/src/contexts/VaultContext";
 
 interface WithdrawalRequestModalProps {
   open: boolean;
@@ -99,21 +100,11 @@ export function WithdrawalRequestModal({
         program.programId
       );
 
-      // Fetch vault to get token mint
-      const vaultAccount = await program.account.vault.fetch(vaultPubkey);
-      const tokenMint = vaultAccount.tokenMint || new PublicKey("Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9");
-      
-      // Fetch token mint info to get decimals dynamically
-      const mintInfo = await provider.connection.getParsedAccountInfo(tokenMint);
-      const mintData = mintInfo.value?.data;
-      const decimals = (mintData && 'parsed' in mintData) ? mintData.parsed.info.decimals : 6;
-      const decimalMultiplier = Math.pow(10, decimals);
-      
-      console.log(`Token decimals: ${decimals}, multiplier: ${decimalMultiplier}`);
+
 
       const tx = await program.methods
         .requestWithdrawal(
-          new anchor.BN(amountNum * decimalMultiplier), // Convert using actual token decimals
+          new anchor.BN(amountNum * decimalMultiplier), // Use decimals from context
           destinationPubkey,
           reason
         )
