@@ -35,6 +35,7 @@ export function useVaults(selectedVaultAddress?: string | null) {
 
   // Fetch all user's vaults with FULL data
   const fetchVaults = useCallback(async () => {
+    debugger
     if (!program || !publicKey) {
       setVaults([]);
       setVaultsLoading(false);
@@ -51,24 +52,30 @@ export function useVaults(selectedVaultAddress?: string | null) {
     setVaultsError(null);
 
     try {
-      // Fetch vaults where the user is the owner
-      // Filter by account size to only get vaults with the new structure (includes token_mint)
-      const ownedVaultAccounts = await program.account.vault.all([
-        {
-          memcmp: {
-            offset: 8, // After discriminator
-            bytes: publicKey.toBase58(),
-          }
-        },
+      // Fetch ALL vaults (with new structure that includes token_mint)
+      // Filter by account size to only get vaults with the new structure
+      const allVaultAccounts = await program.account.vault.all([
         {
           dataSize: 1145, // New vault size with token_mint field (32 bytes larger than old 1113)
         }
       ]);
 
-      console.log(`Found ${ownedVaultAccounts.length} vaults owned by user`);
+      console.log(`Found ${allVaultAccounts.length} total vaults`);
+
+      // Filter vaults where user has ANY role (owner, staff, or approver)
+      const userVaultAccounts = allVaultAccounts.filter((account) => {
+        const vault = account.account;
+        const isOwner = vault.owner.equals(publicKey);
+        const isStaff = vault.staff.some((staffKey) => staffKey.equals(publicKey));
+        const isApprover = vault.approvers.some((approverKey) => approverKey.equals(publicKey));
+        
+        return isOwner || isStaff || isApprover;
+      });
+
+      console.log(`Found ${userVaultAccounts.length} vaults where user has a role (owner, staff, or approver)`);
 
       // Map to VaultData with address
-      const vaultsWithMetadata: VaultWithMetadata[] = ownedVaultAccounts.map((account) => ({
+      const vaultsWithMetadata: VaultWithMetadata[] = userVaultAccounts.map((account) => ({
         ...account.account,
         address: account.publicKey.toString(),
       } as VaultWithMetadata));
@@ -127,7 +134,7 @@ export function useVaults(selectedVaultAddress?: string | null) {
         const tokenBalance = Number(tokenAccountInfo.value.amount) / Math.pow(10, tokenAccountInfo.value.decimals);
         console.log("✅ Token balance found:", tokenBalance);
         setSelectedVaultBalance(tokenBalance);
-      } catch (err) {
+      } catch {
         // Token account might not exist yet (vault not funded)
         console.log("❌ Token account not found or not funded yet");
         setSelectedVaultBalance(0);
