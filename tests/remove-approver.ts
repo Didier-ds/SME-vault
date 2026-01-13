@@ -232,6 +232,8 @@ describe("remove_approver", () => {
     );
 
     // Create vault with threshold = 1
+    const newTokenAccounts = getTokenAccounts(newVaultPda, DEVNET_USDC_MINT);
+
     await program.methods
       .createVault(
         newVaultName,
@@ -242,10 +244,13 @@ describe("remove_approver", () => {
         new anchor.BN(24)
       )
       .accounts({
-        vault: newVaultPda,
+        tokenMint: newTokenAccounts.tokenMint,
+        vaultTokenAccount: newTokenAccounts.vaultTokenAccount,
         owner: provider.wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
-      })
+        tokenProgram: newTokenAccounts.tokenProgram,
+        associatedTokenProgram: newTokenAccounts.associatedTokenProgram,
+      } as any)
       .rpc();
 
     // Add 3 approvers
@@ -306,6 +311,8 @@ describe("remove_approver", () => {
       program.programId
     );
 
+    const freshTokenAccounts = getTokenAccounts(freshVaultPda, DEVNET_USDC_MINT);
+
     await program.methods
       .createVault(
         freshVaultName,
@@ -316,10 +323,13 @@ describe("remove_approver", () => {
         new anchor.BN(24)
       )
       .accounts({
-        vault: freshVaultPda,
+        tokenMint: freshTokenAccounts.tokenMint,
+        vaultTokenAccount: freshTokenAccounts.vaultTokenAccount,
         owner: provider.wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
-      })
+        tokenProgram: freshTokenAccounts.tokenProgram,
+        associatedTokenProgram: freshTokenAccounts.associatedTokenProgram,
+      } as any)
       .rpc();
 
     const testApprover1 = Keypair.generate();

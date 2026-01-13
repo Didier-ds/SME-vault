@@ -70,14 +70,13 @@ describe("remove_staff", () => {
         new anchor.BN(24) // delay hours
       )
       .accounts({
-        vault: vaultPda,
         tokenMint: tokenAccounts.tokenMint,
         vaultTokenAccount: tokenAccounts.vaultTokenAccount,
         owner: provider.wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: tokenAccounts.tokenProgram,
         associatedTokenProgram: tokenAccounts.associatedTokenProgram,
-      })
+      } as any)
       .rpc();
 
     // Add 3 staff members to start
@@ -142,7 +141,7 @@ describe("remove_staff", () => {
     const nonOwner = Keypair.generate();
 
     // Airdrop SOL to non-owner for transaction fees
-    await fundWallet(provider, nonOwner.publicKey, 0.05);
+    await fundWallet(provider, nonOwner.publicKey, 0.1);
 
     try {
       await program.methods
@@ -228,6 +227,8 @@ describe("remove_staff", () => {
       program.programId
     );
 
+    const freshTokenAccounts = getTokenAccounts(freshVaultPda, DEVNET_USDC_MINT);
+
     await program.methods
       .createVault(
         freshVaultName,
@@ -238,10 +239,13 @@ describe("remove_staff", () => {
         new anchor.BN(24)
       )
       .accounts({
-        vault: freshVaultPda,
+        tokenMint: freshTokenAccounts.tokenMint,
+        vaultTokenAccount: freshTokenAccounts.vaultTokenAccount,
         owner: provider.wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
-      })
+        tokenProgram: freshTokenAccounts.tokenProgram,
+        associatedTokenProgram: freshTokenAccounts.associatedTokenProgram,
+      } as any)
       .rpc();
 
     const testStaff1 = Keypair.generate();
@@ -300,6 +304,8 @@ describe("remove_staff", () => {
       program.programId
     );
 
+    const fresh2TokenAccounts = getTokenAccounts(freshVaultPda, DEVNET_USDC_MINT);
+
     await program.methods
       .createVault(
         freshVaultName,
@@ -310,10 +316,13 @@ describe("remove_staff", () => {
         new anchor.BN(24)
       )
       .accounts({
-        vault: freshVaultPda,
+        tokenMint: fresh2TokenAccounts.tokenMint,
+        vaultTokenAccount: fresh2TokenAccounts.vaultTokenAccount,
         owner: provider.wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
-      })
+        tokenProgram: fresh2TokenAccounts.tokenProgram,
+        associatedTokenProgram: fresh2TokenAccounts.associatedTokenProgram,
+      } as any)
       .rpc();
 
     const testStaff = Keypair.generate();

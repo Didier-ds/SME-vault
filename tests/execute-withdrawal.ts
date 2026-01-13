@@ -39,12 +39,12 @@ describe("execute_withdrawal", () => {
     destination = Keypair.generate();
 
     // Fund participants (0.3 SOL for multiple PDAs + rent + fees)
+    // Note: destination doesn't need funding - it's just a recipient address, not a signer
     const airdropPromises = [
       staffMember,
       approver1,
       approver2,
       executor,
-      destination,
     ].map(async (keypair) => {
       await fundWallet(provider, keypair.publicKey, 0.3);
     });

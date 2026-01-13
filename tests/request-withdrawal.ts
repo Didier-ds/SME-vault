@@ -24,8 +24,8 @@ describe("request_withdrawal", () => {
     destination = Keypair.generate();
 
     // Fund test wallets from provider wallet (need extra for rent + transfers)
-    await fundWallet(provider, staffMember.publicKey, 0.2);
-    await fundWallet(provider, nonStaff.publicKey, 0.2);
+    await fundWallet(provider, staffMember.publicKey, 0.5);
+    await fundWallet(provider, nonStaff.publicKey, 0.5);
 
     // Create vault
     [vaultPda] = PublicKey.findProgramAddressSync(
