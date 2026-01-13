@@ -98,7 +98,6 @@ export function VaultSwitcher({
                   {vault.address === selectedVault && (
                     <div className="w-2 h-2 rounded-full bg-primary"></div>
                   )}
-                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />

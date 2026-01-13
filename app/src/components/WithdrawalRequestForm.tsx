@@ -11,6 +11,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { useProgram } from "@/src/hooks";
 import { Separator } from "@/components/ui/separator";
 import { useVaultContext } from "@/src/contexts/VaultContext";
+import { toast } from "sonner";
 
 interface WithdrawalRequestFormProps {
   vaultAddress: string;
@@ -112,6 +113,21 @@ export function WithdrawalRequestForm({
 
       console.log("✅ Withdrawal request created:", tx);
 
+      // Show success toast with Solscan link
+      const solscanUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
+      toast.success("Withdrawal request created successfully!", {
+        description: (
+          <a 
+            href={solscanUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline inline-flex items-center gap-1"
+          >
+            View on Solscan →
+          </a>
+        ),
+      });
+
       // Reset form
       setAmount("");
       setDestination("");
@@ -122,7 +138,11 @@ export function WithdrawalRequestForm({
       }
     } catch (err) {
       console.error("Error creating withdrawal request:", err);
-      setError(err instanceof Error ? err.message : "Failed to create withdrawal request");
+      const errorMessage = err instanceof Error ? err.message : "Failed to create withdrawal request";
+      setError(errorMessage);
+      toast.error("Failed to create withdrawal request", {
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }

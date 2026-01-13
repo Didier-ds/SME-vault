@@ -78,9 +78,9 @@ export default function WithdrawalsPage() {
           />
         )}
 
-        {/* Pending Withdrawals */}
+        {/* Active Withdrawals (Pending & Approved) */}
         <div>
-          <h2 className="text-2xl font-semibold mb-4">Pending Requests</h2>
+          <h2 className="text-2xl font-semibold mb-4">Withdrawal Requests</h2>
           {loading || vaultsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -92,14 +92,19 @@ export default function WithdrawalsPage() {
               <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <p className="text-red-500">{error}</p>
             </Card>
-          ) : pending.length === 0 ? (
+          ) : !tokenMint ? (
+            <Card className="p-12 text-center">
+              <AlertCircle className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="text-muted-foreground">Token mint not available</p>
+            </Card>
+          ) : pending.length === 0 && approved.length === 0 ? (
             <Card className="p-12 text-center">
               <Inbox className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-              <p className="text-muted-foreground">No pending withdrawal requests</p>
+              <p className="text-muted-foreground">No withdrawal requests</p>
             </Card>
           ) : (
             <div className="grid gap-4">
-              {pending.map((withdrawal) => (
+              {[...pending, ...approved].map((withdrawal) => (
                 <WithdrawalCard
                   key={withdrawal.publicKey.toString()}
                   withdrawal={withdrawal}
@@ -119,33 +124,8 @@ export default function WithdrawalsPage() {
           )}
         </div>
 
-        {/* Approved Withdrawals */}
-        {approved.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">Approved (Ready to Execute)</h2>
-            <div className="grid gap-4">
-              {approved.map((withdrawal) => (
-                <WithdrawalCard
-                  key={withdrawal.publicKey.toString()}
-                  withdrawal={withdrawal}
-                  vaultData={{
-                    approvalThreshold: selectedVault?.approvalThreshold || 1,
-                    owner: selectedVault?.owner || PublicKey.default,
-                    name: selectedVault?.name || "",
-                    bump: selectedVault?.bump || 0,
-                  }}
-                  tokenMint={tokenMint}
-                  currentUserIsApprover={isApprover}
-                  currentUserPublicKey={publicKey || undefined}
-                  onActionComplete={handleRefresh}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Executed Withdrawals */}
-        {executed.length > 0 && (
+        {executed.length > 0 && tokenMint && (
           <div>
             <h2 className="text-2xl font-semibold mb-4">Completed</h2>
             <div className="grid gap-4">

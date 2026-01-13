@@ -5,3 +5,4 @@ export { useUserVaults } from "./useUserVaults"; // Legacy - use useVaults inste
 export { useWithdrawalRequests } from "./useWithdrawalRequests";
 export { useWithdrawals } from "./useWithdrawals";
 export { useUserRole } from "./useUserRole";
+export { useVaultTransactions, type VaultTransaction } from "./useVaultTransactions";

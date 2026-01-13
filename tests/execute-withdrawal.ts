@@ -6,11 +6,12 @@ import { fundWallet } from "./utils/fund-wallet";
 import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   createMint,
   createAccount,
   mintTo,
   getAccount,
-  getOrCreateAssociatedTokenAccount,
+  getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 
 describe("execute_withdrawal", () => {
@@ -68,7 +69,14 @@ describe("execute_withdrawal", () => {
       program.programId
     );
 
-    // Create vault
+    // Derive vault token account address
+    vaultTokenAccount = getAssociatedTokenAddressSync(
+      mint,
+      vaultPda,
+      true // allowOwnerOffCurve - required for PDAs
+    );
+
+    // Create vault (this will initialize the vault token account)
     await program.methods
       .createVault(
         vaultName,
@@ -80,20 +88,14 @@ describe("execute_withdrawal", () => {
       )
       .accounts({
         vault: vaultPda,
+        tokenMint: mint,
+        vaultTokenAccount: vaultTokenAccount,
         owner: provider.wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       })
       .rpc();
-
-    // Create token account for vault PDA (use getOrCreateAssociatedTokenAccount with allowOwnerOffCurve)
-    const vaultTokenAccountInfo = await getOrCreateAssociatedTokenAccount(
-      provider.connection,
-      provider.wallet.payer,
-      mint,
-      vaultPda, // Owner is the vault PDA
-      true // allowOwnerOffCurve - required for PDAs
-    );
-    vaultTokenAccount = vaultTokenAccountInfo.address;
 
     // Create token account for destination
     destinationTokenAccount = await createAccount(

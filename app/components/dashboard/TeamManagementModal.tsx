@@ -68,7 +68,20 @@ export function TeamManagementModal({
 
       console.log("✅ Staff added, tx:", signature);
 
-      toast.success("Staff member added successfully!");
+      // Show success toast with Solscan link
+      const solscanUrl = `https://solscan.io/tx/${signature}?cluster=devnet`;
+      toast.success("Staff member added successfully!", {
+        description: (
+          <a 
+            href={solscanUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline inline-flex items-center gap-1"
+          >
+            View on Solscan →
+          </a>
+        ),
+      });
       setStaffInput("");
       
       // Trigger vault data refetch immediately
@@ -106,7 +119,7 @@ export function TeamManagementModal({
 
       // Call add_approver instruction
       const vaultPubkey = new PublicKey(selectedVaultAddress);
-      await program.methods
+      const signature = await program.methods
         .addApprover(approverPubkey)
         .accounts({
           vault: vaultPubkey,
@@ -114,7 +127,22 @@ export function TeamManagementModal({
         })
         .rpc();
 
-      toast.success("Approver added successfully!");
+      console.log("✅ Approver added, tx:", signature);
+
+      // Show success toast with Solscan link
+      const solscanUrl = `https://solscan.io/tx/${signature}?cluster=devnet`;
+      toast.success("Approver added successfully!", {
+        description: (
+          <a 
+            href={solscanUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline inline-flex items-center gap-1"
+          >
+            View on Solscan →
+          </a>
+        ),
+      });
       setApproverInput("");
 
       // Trigger vault data refetch immediately
@@ -146,7 +174,20 @@ export function TeamManagementModal({
 
       console.log("✅ Staff removed, tx:", signature);
 
-      toast.success("Staff member removed successfully!");
+      // Show success toast with Solscan link
+      const solscanUrl = `https://solscan.io/tx/${signature}?cluster=devnet`;
+      toast.success("Staff member removed successfully!", {
+        description: (
+          <a 
+            href={solscanUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline inline-flex items-center gap-1"
+          >
+            View on Solscan →
+          </a>
+        ),
+      });
       
       // Trigger global refetch immediately
       console.log("🔄 Triggering global refetch after remove staff...");
@@ -183,7 +224,20 @@ export function TeamManagementModal({
 
       console.log("✅ Approver removed, tx:", signature);
 
-      toast.success("Approver removed successfully!");
+      // Show success toast with Solscan link
+      const solscanUrl = `https://solscan.io/tx/${signature}?cluster=devnet`;
+      toast.success("Approver removed successfully!", {
+        description: (
+          <a 
+            href={solscanUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline inline-flex items-center gap-1"
+          >
+            View on Solscan →
+          </a>
+        ),
+      });
       
       // Trigger global refetch immediately
       console.log("🔄 Triggering global refetch after remove approver...");

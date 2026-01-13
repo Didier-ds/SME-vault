@@ -4,6 +4,7 @@ import { PublicKey, Keypair } from "@solana/web3.js";
 import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
 import { fundWallet } from "./utils/fund-wallet";
+import { DEVNET_USDC_MINT, getTokenAccounts } from "./utils/token-setup";
 
 describe("sme-vault", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -42,6 +43,8 @@ describe("sme-vault", () => {
         program.programId
       );
 
+      const tokenAccounts = getTokenAccounts(vaultPda, DEVNET_USDC_MINT);
+
       try {
         await program.methods
           .createVault(
@@ -54,8 +57,12 @@ describe("sme-vault", () => {
           )
           .accounts({
             vault: vaultPda,
+            tokenMint: tokenAccounts.tokenMint,
+            vaultTokenAccount: tokenAccounts.vaultTokenAccount,
             owner: owner,
             systemProgram: anchor.web3.SystemProgram.programId,
+            tokenProgram: tokenAccounts.tokenProgram,
+            associatedTokenProgram: tokenAccounts.associatedTokenProgram,
           })
           .rpc();
       } catch (error) {

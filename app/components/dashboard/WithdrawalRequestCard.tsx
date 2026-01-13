@@ -18,7 +18,7 @@ interface WithdrawalRequestCardProps {
 export function WithdrawalRequestCard({ request }: WithdrawalRequestCardProps) {
   const { program } = useProgram();
   const { publicKey } = useWallet();
-  const { isApprover } = useUserRole(request.vault);
+  const { isApprover } = useUserRole();
   
   const [loading, setLoading] = useState(false);
 
@@ -97,7 +97,21 @@ export function WithdrawalRequestCard({ request }: WithdrawalRequestCardProps) {
         .rpc();
 
       console.log("✅ Withdrawal approved:", tx);
-      toast.success("Withdrawal approved successfully!");
+      
+      // Show success toast with Solscan link
+      const solscanUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
+      toast.success("Withdrawal approved successfully!", {
+        description: (
+          <a 
+            href={solscanUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline inline-flex items-center gap-1"
+          >
+            View on Solscan →
+          </a>
+        ),
+      });
 
       // Refresh page to show update
       setTimeout(() => window.location.reload(), 1500);

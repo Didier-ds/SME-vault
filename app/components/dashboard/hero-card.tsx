@@ -20,17 +20,21 @@ interface HeroCardProps {
   tokenAccountAddress: string | null;
   loading: boolean;
   error: string | null;
+  isOwner?: boolean;
+  onManageTeam?: () => void;
 }
 
-export function HeroCard({ 
-  vaultAddress, 
-  hasVaults, 
+export function HeroCard({
+  vaultAddress,
+  hasVaults,
   onCreateVault,
   vault,
   balance,
   tokenAccountAddress,
   loading,
-  error
+  error,
+  isOwner,
+  onManageTeam
 }: HeroCardProps) {
   const { publicKey } = useWallet();
   // Removed internal useVault hook to avoid duplicate state
@@ -76,19 +80,34 @@ export function HeroCard({
         </div>
         
         {/* Decorative Gradient Background */}
-        <motion.div 
-          className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"
-          initial={{ opacity: 0.5, scale: 0.8 }}
-          animate={{ opacity: [0.5, 0.8, 0.5], scale: [0.8, 1.1, 0.8] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          style={{ transform: 'translate(50%, -50%)' }}
-        />
+        {/*<motion.div */}
+        {/*  className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"*/}
+        {/*  initial={{ opacity: 0.5, scale: 0.8 }}*/}
+        {/*  animate={{ opacity: [0.5, 0.8, 0.5], scale: [0.8, 1.1, 0.8] }}*/}
+        {/*  transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}*/}
+        {/*  style={{ transform: 'translate(50%, -50%)' }}*/}
+        {/*/>*/}
       </Card>
     );
   }
 
   return (
     <Card className="relative overflow-hidden border-border/50 bg-white/5 backdrop-blur-xl p-8">
+      {/* Manage Team Button - Top Right */}
+      {isOwner && vault && onManageTeam && (
+        <div className="absolute top-6 right-6 z-20">
+          <Button
+            onClick={onManageTeam}
+            className="gap-2 py-5"
+            variant="outline"
+            size="sm"
+          >
+            <Users className="w-4 h-4" />
+            Manage Team
+          </Button>
+        </div>
+      )}
+
       <div className="relative z-10">
         {/* Vault Name & Roles */}
         <div className="flex items-center gap-3 mb-8">
@@ -189,14 +208,14 @@ export function HeroCard({
         )}
       </div>
 
-      {/* Decorative Gradient */}
-      <motion.div 
-        className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"
-        initial={{ opacity: 0.5, scale: 0.8 }}
-        animate={{ opacity: [0.5, 0.8, 0.5], scale: [0.8, 1.1, 0.8] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        style={{ transform: 'translate(50%, -50%)' }}
-      />
+      {/*/!* Decorative Gradient *!/*/}
+      {/*<motion.div */}
+      {/*  className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"*/}
+      {/*  initial={{ opacity: 0.5, scale: 0.8 }}*/}
+      {/*  animate={{ opacity: [0.5, 0.8, 0.5], scale: [0.8, 1.1, 0.8] }}*/}
+      {/*  transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}*/}
+      {/*  style={{ transform: 'translate(50%, -50%)' }}*/}
+      {/*/>*/}
     </Card>
   );
 }

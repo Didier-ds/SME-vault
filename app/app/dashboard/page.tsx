@@ -9,7 +9,7 @@ import { WithdrawalRequestModal } from "@/components/dashboard/WithdrawalRequest
 import { useVaultContext } from "../../src/contexts/VaultContext";
 import { useUserRole } from "../../src/hooks";
 import { Button } from "@/components/ui/button";
-import { Users, Send } from "lucide-react";
+import { Send } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -38,36 +38,26 @@ export default function DashboardPage() {
         tokenAccountAddress={tokenAccountAddress}
         loading={loading}
         error={error}
+        isOwner={isOwner}
+        onManageTeam={() => setTeamModalOpen(true)}
       />
 
       {/* Action Buttons */}
-      {selectedVaultAddress && (
+      {selectedVaultAddress && isStaff && selectedVault && (
         <div className="flex gap-3 justify-end">
-          {isStaff && selectedVault && (
-            <Button
-              onClick={() => setWithdrawalModalOpen(true)}
-              className="gap-2"
-              variant="default"
-            >
-              <Send className="w-4 h-4" />
-              Request Withdrawal
-            </Button>
-          )}
-          {isOwner && (
-            <Button
-              onClick={() => setTeamModalOpen(true)}
-              className="gap-2"
-              variant="outline"
-            >
-              <Users className="w-4 h-4" />
-              Manage Team
-            </Button>
-          )}
+          <Button
+            onClick={() => setWithdrawalModalOpen(true)}
+            className="gap-2"
+            variant="default"
+          >
+            <Send className="w-4 h-4" />
+            Request Withdrawal
+          </Button>
         </div>
       )}
 
       {/* Withdrawal Requests */}
-      <section className="space-y-4">
+      <section className="space-y-4 mt-5">
         <h3 className="text-xl font-light text-primary/80">Withdrawal Requests</h3>
         <div className="bg-card border border-border rounded-2xl p-6 backdrop-blur-md">
           <WithdrawalRequestsList vaultAddress={selectedVaultAddress} />

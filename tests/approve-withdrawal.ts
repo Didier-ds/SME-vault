@@ -4,6 +4,7 @@ import { SmeVault } from "../target/types/sme_vault";
 import { expect } from "chai";
 import { fundWallet } from "./utils/fund-wallet";
 import { PublicKey, Keypair } from "@solana/web3.js";
+import { DEVNET_USDC_MINT, getTokenAccounts } from "./utils/token-setup";
 
 describe("approve_withdrawal", () => {
   const provider = anchor.AnchorProvider.env();
@@ -50,6 +51,8 @@ describe("approve_withdrawal", () => {
       program.programId
     );
 
+    const tokenAccounts = getTokenAccounts(vaultPda, DEVNET_USDC_MINT);
+
     await program.methods
       .createVault(
         vaultName,
@@ -61,8 +64,12 @@ describe("approve_withdrawal", () => {
       )
       .accounts({
         vault: vaultPda,
+        tokenMint: tokenAccounts.tokenMint,
+        vaultTokenAccount: tokenAccounts.vaultTokenAccount,
         owner: provider.wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram: tokenAccounts.tokenProgram,
+        associatedTokenProgram: tokenAccounts.associatedTokenProgram,
       })
       .rpc();
 

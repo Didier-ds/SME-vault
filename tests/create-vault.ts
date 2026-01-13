@@ -3,6 +3,7 @@ import {Program} from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { SmeVault } from "../target/types/sme_vault";
 import {expect} from "chai";
+import { DEVNET_USDC_MINT, getTokenAccounts } from "./utils/token-setup";
 
 describe("sme-vault", () => {
     anchor.setProvider(anchor.AnchorProvider.env())
@@ -22,6 +23,8 @@ describe("sme-vault", () => {
             ],
                 program.programId)
 
+            const tokenAccounts = getTokenAccounts(vaultPda, DEVNET_USDC_MINT);
+
             const tx = await program.methods
                 .createVault(
                     vaultName,
@@ -31,9 +34,13 @@ describe("sme-vault", () => {
                     new anchor.BN(3000),
                     new anchor.BN(24)
                 ).accounts({
-                    vault:vaultPda,
+                    vault: vaultPda,
+                    tokenMint: tokenAccounts.tokenMint,
+                    vaultTokenAccount: tokenAccounts.vaultTokenAccount,
                     owner,
-                    systemProgram: anchor.web3.SystemProgram.programId
+                    systemProgram: anchor.web3.SystemProgram.programId,
+                    tokenProgram: tokenAccounts.tokenProgram,
+                    associatedTokenProgram: tokenAccounts.associatedTokenProgram,
                 }).rpc()
 
             console.log("✅ Vault created! Signature:", tx);
@@ -43,6 +50,7 @@ describe("sme-vault", () => {
 
             expect(vaultAccount.name).to.equal(vaultName);
             expect(vaultAccount.owner.toString()).to.equal(owner.toString());
+            expect(vaultAccount.tokenMint.toString()).to.equal(DEVNET_USDC_MINT.toString());
             expect(vaultAccount.approvalThreshold).to.equal(2);
             expect(vaultAccount.dailyLimit.toNumber()).to.equal(10000);
             expect(vaultAccount.txLimit.toNumber()).to.equal(5000);
@@ -64,6 +72,8 @@ describe("sme-vault", () => {
                 ],
                 program.programId)
 
+            const tokenAccounts = getTokenAccounts(vaultPda, DEVNET_USDC_MINT);
+
             try {
                 await program.methods.createVault(
                     vaultName,
@@ -74,8 +84,12 @@ describe("sme-vault", () => {
                     new anchor.BN(24)
                 ).accounts({
                     vault: vaultPda,
+                    tokenMint: tokenAccounts.tokenMint,
+                    vaultTokenAccount: tokenAccounts.vaultTokenAccount,
                     owner: owner,
                     systemProgram: anchor.web3.SystemProgram.programId,
+                    tokenProgram: tokenAccounts.tokenProgram,
+                    associatedTokenProgram: tokenAccounts.associatedTokenProgram,
                 })
                     .rpc();
 
@@ -98,6 +112,8 @@ describe("sme-vault", () => {
                 program.programId
             );
 
+            const tokenAccounts = getTokenAccounts(vaultPda, DEVNET_USDC_MINT);
+
             try {
                 await program.methods
                     .createVault(
@@ -110,8 +126,12 @@ describe("sme-vault", () => {
                     )
                     .accounts({
                         vault: vaultPda,
+                        tokenMint: tokenAccounts.tokenMint,
+                        vaultTokenAccount: tokenAccounts.vaultTokenAccount,
                         owner: owner,
                         systemProgram: anchor.web3.SystemProgram.programId,
+                        tokenProgram: tokenAccounts.tokenProgram,
+                        associatedTokenProgram: tokenAccounts.associatedTokenProgram,
                     })
                     .rpc();
 
@@ -134,6 +154,8 @@ describe("sme-vault", () => {
                 program.programId
             );
 
+            const tokenAccounts = getTokenAccounts(vaultPda, DEVNET_USDC_MINT);
+
             try {
                 await program.methods
                     .createVault(
@@ -146,8 +168,12 @@ describe("sme-vault", () => {
                     )
                     .accounts({
                         vault: vaultPda,
+                        tokenMint: tokenAccounts.tokenMint,
+                        vaultTokenAccount: tokenAccounts.vaultTokenAccount,
                         owner: owner,
                         systemProgram: anchor.web3.SystemProgram.programId,
+                        tokenProgram: tokenAccounts.tokenProgram,
+                        associatedTokenProgram: tokenAccounts.associatedTokenProgram,
                     })
                     .rpc();
 

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { VaultSwitcher } from "@/components/dashboard/vault-switcher";
 import { ConnectWalletButton } from "@/components/ui/connect-wallet-button";
 import { useVaultContext } from "@/src/contexts/VaultContext";
-import { LayoutDashboard, ArrowDownUp, Users, Settings, Loader2 } from "lucide-react";
+import { LayoutDashboard, ArrowDownUp, Users, Settings, Loader2, Activity } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -34,14 +34,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Sidebar Header */}
         <SidebarHeader>
           <div className="px-4 py-6">
-            <h1 className="text-2xl font-light tracking-wide font-display text-primary">
+            <h1 className="text-2xl font-light tracking-wide font-display font-bold text-primary">
               SME Vault
             </h1>
           </div>
         </SidebarHeader>
 
         {/* Sidebar Content */}
-        <SidebarContent>
+        <SidebarContent className="py-2">
           {/* Vault Switcher */}
 
           <div className="relative">
@@ -56,30 +56,35 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
           {/* Navigation Menu */}
           <SidebarGroup>
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton onClick={() => router.push("/dashboard")}>
-                    <LayoutDashboard className="w-4 h-4" />
+                    <LayoutDashboard className="w-5 h-5" />
                     <span>Overview</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton onClick={() => router.push("/dashboard/withdrawals")}>
-                    <ArrowDownUp className="w-4 h-4" />
+                    <ArrowDownUp className="w-5 h-5" />
                     <span>Withdrawals</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
+                  <SidebarMenuButton onClick={() => router.push("/dashboard/activity")}>
+                    <Activity className="w-5 h-5" />
+                    <span>Activity</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
                   <SidebarMenuButton>
-                    <Users className="w-4 h-4" />
+                    <Users className="w-5 h-5" />
                     <span>Team</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton>
-                    <Settings className="w-4 h-4" />
+                    <Settings className="w-5 h-5" />
                     <span>Settings</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

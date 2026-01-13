@@ -131,12 +131,37 @@ export function WithdrawalCard({
 
       console.log("✅ Withdrawal approved:", tx);
 
+      // Show success toast with Solscan link
+      const solscanUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
+      
+      // Dynamic import toast
+      const { toast } = await import("sonner");
+      toast.success("Withdrawal approved successfully!", {
+        description: (
+          <a 
+            href={solscanUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline inline-flex items-center gap-1"
+          >
+            View on Solscan →
+          </a>
+        ),
+      });
+
       if (onActionComplete) {
         setTimeout(onActionComplete, 1500);
       }
     } catch (err) {
       console.error("Error approving withdrawal:", err);
-      setError(err instanceof Error ? err.message : "Failed to approve");
+      const errorMessage = err instanceof Error ? err.message : "Failed to approve";
+      setError(errorMessage);
+      
+      // Dynamic import toast for error
+      const { toast } = await import("sonner");
+      toast.error("Failed to approve withdrawal", {
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
@@ -220,23 +245,21 @@ export function WithdrawalCard({
       
       // Show success toast with Solscan link
       const solscanUrl = `https://solscan.io/tx/${tx}?cluster=devnet`;
-      const toastMessage = (
-        <div className="flex flex-col gap-1">
-          <div>Withdrawal executed successfully!</div>
+      
+      // Dynamic import toast
+      const { toast } = await import("sonner");
+      toast.success("Withdrawal executed successfully!", {
+        description: (
           <a 
             href={solscanUrl} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-xs text-blue-400 hover:underline"
+            className="text-blue-400 hover:underline inline-flex items-center gap-1"
           >
             View on Solscan →
           </a>
-        </div>
-      );
-      
-      // Dynamic import toast
-      const { toast } = await import("sonner");
-      toast.success(toastMessage);
+        ),
+      });
 
       if (onActionComplete) {
         setTimeout(onActionComplete, 1500);
