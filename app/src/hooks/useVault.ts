@@ -25,7 +25,7 @@ interface VaultData {
 }
 
 // USDC Devnet Mint Address
-const USDC_MINT_DEVNET = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+const CUSTOM_USDC_MINT_DEVNET = new PublicKey("Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9");
 
 export function useVault(vaultAddress?: string) {
   const { program } = useProgram();
@@ -52,10 +52,16 @@ export function useVault(vaultAddress?: string) {
 
         // Calculate the vault's associated token account address
         const vaultTokenAccount = await getAssociatedTokenAddress(
-          USDC_MINT_DEVNET,
+          CUSTOM_USDC_MINT_DEVNET,
           vaultPubkey,
           true // allowOwnerOffCurve - required for PDAs
         );
+        
+        console.log("🔍 Debug Info:");
+        console.log("Vault PDA:", vaultPubkey.toString());
+        console.log("Token Mint:", CUSTOM_USDC_MINT_DEVNET.toString());
+        console.log("Calculated Token Account:", vaultTokenAccount.toString());
+        
         setTokenAccountAddress(vaultTokenAccount.toString());
 
         // Try to fetch the token account balance
@@ -63,10 +69,12 @@ export function useVault(vaultAddress?: string) {
           const tokenAccountInfo = await connection.getTokenAccountBalance(vaultTokenAccount);
           // Convert to decimal number (USDC has 6 decimals)
           const tokenBalance = Number(tokenAccountInfo.value.amount) / Math.pow(10, tokenAccountInfo.value.decimals);
+          console.log("✅ Token balance found:", tokenBalance);
           setBalance(tokenBalance);
-        } catch {
+        } catch (err) {
           // Token account might not exist yet (vault not funded)
-          console.log("Token account not found or not funded yet");
+          console.log("❌ Token account not found or not funded yet");
+          console.log("Error:", err);
           setBalance(0);
         }
       } catch (err) {

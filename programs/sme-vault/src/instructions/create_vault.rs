@@ -1,4 +1,6 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, Token, TokenAccount};
+use anchor_spl::associated_token::AssociatedToken;
 use crate::{Vault, VaultErrorCode};
 
 pub fn handler(ctx: Context<CreateVault>, name: String, approval_threshold: u8, daily_limit: u64, tx_limit: u64, large_withdrawal_threshold: u64, delay_hours: u64) -> Result<()> {
@@ -26,6 +28,7 @@ pub fn handler(ctx: Context<CreateVault>, name: String, approval_threshold: u8, 
 
     // 4. LOG FOR DEBUGGING
     msg!("Vault created: {} by {}", vault.name, vault.owner);
+    msg!("Vault token account initialized: {}", ctx.accounts.vault_token_account.key());
 
     // 5. RETURN SUCCESS
     Ok(())
@@ -43,8 +46,22 @@ pub struct CreateVault<'info> {
     )]
     pub vault: Account<'info, Vault>,
 
+    /// The token mint (USDC or custom token)
+    pub token_mint: Account<'info, Mint>,
+
+    /// The vault's associated token account to be initialized
+    #[account(
+        init,
+        payer = owner,
+        associated_token::mint = token_mint,
+        associated_token::authority = vault
+    )]
+    pub vault_token_account: Account<'info, TokenAccount>,
+
     #[account(mut)]
     pub owner: Signer<'info>,
 
     pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }

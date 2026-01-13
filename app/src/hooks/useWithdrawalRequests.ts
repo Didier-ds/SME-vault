@@ -57,7 +57,7 @@ export function useWithdrawalRequests(vaultAddress?: string) {
                 vault: data.vault.toString(),
                 requester: data.requester.toString(),
                 destination: data.destination.toString(),
-                amount: (data.amount as BN).toNumber() / 1_000_000, // Convert from 6 decimals
+                amount: (data.amount as BN).toNumber(), // Keep as whole number
                 reason: data.reason as string,
                 status: parseStatus(data.status),
                 approvals: (data.approvals as PublicKey[]).map((a) => a.toString()),
