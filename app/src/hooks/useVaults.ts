@@ -35,11 +35,11 @@ export function useVaults(selectedVaultAddress?: string | null) {
 
   // Fetch all user's vaults with FULL data
   const fetchVaults = useCallback(async () => {
-    debugger
     if (!program || !publicKey) {
       setVaults([]);
       setVaultsLoading(false);
       return;
+      
     }
 
     // Prevent duplicate fetches in React Strict Mode

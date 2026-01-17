@@ -6,6 +6,7 @@ import { HeroCard } from "@/components/dashboard/hero-card";
 import { WithdrawalRequestsList } from "@/components/dashboard/WithdrawalRequestsList";
 import { TeamManagementModal } from "@/components/dashboard/TeamManagementModal";
 import { WithdrawalRequestModal } from "@/components/dashboard/WithdrawalRequestModal";
+import { WalletConnectionDialog } from "@/components/dashboard/WalletConnectionDialog";
 import { useVaultContext } from "../../src/contexts/VaultContext";
 import { useUserRole } from "../../src/hooks";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,9 @@ export default function DashboardPage() {
 
   return (
     <>
+      {/* Wallet Connection Dialog - Appears when no wallet is connected */}
+      <WalletConnectionDialog />
+
       {/* Hero Card Component */}
       <HeroCard
         vaultAddress={selectedVaultAddress}

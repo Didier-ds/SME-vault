@@ -238,7 +238,7 @@ export default function CreateVaultPage() {
       }
 
       // Redirect to dashboard
-      setTimeout(() => router.push("/"), 1500);
+      setTimeout(() => router.push("/dashboard"), 1500);
     } catch (err) {
       console.error("Error creating vault:", err);
       setError(err instanceof Error ? err.message : "Failed to create vault");
@@ -560,7 +560,7 @@ export default function CreateVaultPage() {
         <div className="flex gap-4 sticky bottom-6">
           <Button
             variant="outline"
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/dashboard")}
             disabled={loading}
             className="flex-1"
           >

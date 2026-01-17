@@ -16,7 +16,7 @@ import * as anchor from "@coral-xyz/anchor";
 
 interface TransactionActivity {
   id: string;
-  type: "withdrawal_request" | "withdrawal_approval" | "withdrawal_execution" | "withdrawal_rejection" | "deposit" | "withdrawal" | "program_instruction";
+  type: "withdrawal_request" | "withdrawal_approval" | "withdrawal_execution" | "withdrawal_rejection" | "deposit" | "withdrawal" | "program_instruction" | "unknown";
   timestamp: number;
   signature?: string;
   withdrawalPublicKey?: PublicKey;

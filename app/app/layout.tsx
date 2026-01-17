@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "SME-Vault | Industrial Frost",
+  title: "SME-Vault",
   description: "Secure, non-custodial treasury management for SMEs on Solana.",
 };
 
