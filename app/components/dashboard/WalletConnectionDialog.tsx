@@ -112,9 +112,20 @@ export function WalletConnectionDialog() {
               }}
             />
           </div>
-          <p className="text-sm text-muted-foreground text-center">
-            Once connected, this dialog will automatically close.
-          </p>
+          <div className="text-sm text-muted-foreground text-center space-y-2">
+            <p>
+              Once connected, this dialog will automatically close.
+            </p>
+            <div className="text-xs text-muted-foreground/70 pt-2 border-t border-border/50 space-y-1">
+              <p className="font-medium">Troubleshooting:</p>
+              <ul className="list-disc list-inside space-y-1 text-left max-w-sm mx-auto">
+                <li>Make sure you have Phantom or Solflare installed</li>
+                <li>Unlock your wallet extension</li>
+                <li>Accept the connection request in your wallet</li>
+                <li>Refresh the page if connection fails</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

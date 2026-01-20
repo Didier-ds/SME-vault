@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,9 +29,15 @@ import { Separator } from "@/components/ui/separator";
 const DEFAULT_MINT = "Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9";
 
 interface TeamMember {
+  id: string; // Add unique ID for stable keys
   address: string;
   label: string;
 }
+
+// Move formatAddress outside component to avoid recreation
+const formatAddress = (address: string) => {
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
+};
 
 interface VaultFormData {
   name: string;
@@ -68,59 +74,87 @@ export default function CreateVaultPage() {
   const [newApprover, setNewApprover] = useState({ address: "", label: "" });
   const [newStaff, setNewStaff] = useState({ address: "", label: "" });
 
-  const handleChange = (field: keyof VaultFormData, value: string) => {
+  // Memoize handlers with useCallback to prevent unnecessary re-renders
+  const handleChange = useCallback((field: keyof VaultFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  const addApprover = () => {
+  const addApprover = useCallback(() => {
     if (!newApprover.address) return;
     try {
       new PublicKey(newApprover.address);
+      const newMember: TeamMember = {
+        id: `${Date.now()}-${Math.random()}`, // Generate unique ID
+        address: newApprover.address,
+        label: newApprover.label,
+      };
       setFormData((prev) => ({
         ...prev,
-        approvers: [...prev.approvers, newApprover],
+        approvers: [...prev.approvers, newMember],
       }));
       setNewApprover({ address: "", label: "" });
       setError(null);
     } catch {
       setError("Invalid approver address");
     }
-  };
+  }, [newApprover]);
  
-  const removeApprover = (index: number) => {
+  const removeApprover = useCallback((id: string) => {
     setFormData((prev) => ({
       ...prev,
-      approvers: prev.approvers.filter((_, i) => i !== index),
+      approvers: prev.approvers.filter((member) => member.id !== id),
     }));
-  };
+  }, []);
 
-  const addStaff = () => {
+  const addStaff = useCallback(() => {
     if (!newStaff.address) return;
     try {
       new PublicKey(newStaff.address);
+      const newMember: TeamMember = {
+        id: `${Date.now()}-${Math.random()}`, // Generate unique ID
+        address: newStaff.address,
+        label: newStaff.label,
+      };
       setFormData((prev) => ({
         ...prev,
-        staff: [...prev.staff, newStaff],
+        staff: [...prev.staff, newMember],
       }));
       setNewStaff({ address: "", label: "" });
       setError(null);
     } catch {
       setError("Invalid staff address");
     }
-  };
+  }, [newStaff]);
 
-  const removeStaff = (index: number) => {
+  const removeStaff = useCallback((id: string) => {
     setFormData((prev) => ({
       ...prev,
-      staff: prev.staff.filter((_, i) => i !== index),
+      staff: prev.staff.filter((member) => member.id !== id),
     }));
-  };
+  }, []);
 
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 4)}...${address.slice(-4)}`;
-  };
+  // Memoize onChange handlers to prevent object recreation
+  const handleApproverAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewApprover((prev) => ({ ...prev, address: e.target.value }));
+  }, []);
 
-  const createVault = async () => {
+  const handleApproverLabelChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewApprover((prev) => ({ ...prev, label: e.target.value }));
+  }, []);
+
+  const handleStaffAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewStaff((prev) => ({ ...prev, address: e.target.value }));
+  }, []);
+
+  const handleStaffLabelChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewStaff((prev) => ({ ...prev, label: e.target.value }));
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    router.push("/dashboard");
+  }, [router]);
+
+  const createVault = useCallback(async () => {
     if (!program || !connected) {
       setError("Please connect your wallet first");
       return;
@@ -245,7 +279,7 @@ export default function CreateVaultPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [program, connected, formData, router]);
 
   return (
     <>
@@ -422,9 +456,9 @@ export default function CreateVaultPage() {
                     No approvers yet
                   </div>
                 ) : (
-                  formData.approvers.map((approver, index) => (
+                  formData.approvers.map((approver) => (
                     <div
-                      key={index}
+                      key={approver.id}
                       className="flex items-center justify-between p-3 border border-border rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                     >
                       <div className="flex-1 min-w-0">
@@ -438,7 +472,7 @@ export default function CreateVaultPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeApprover(index)}
+                        onClick={() => removeApprover(approver.id)}
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -453,17 +487,13 @@ export default function CreateVaultPage() {
                 <Input
                   placeholder="Wallet address"
                   value={newApprover.address}
-                  onChange={(e) =>
-                    setNewApprover({ ...newApprover, address: e.target.value })
-                  }
+                  onChange={handleApproverAddressChange}
                   className="font-mono text-sm"
                 />
                 <Input
                   placeholder="Label (optional)"
                   value={newApprover.label}
-                  onChange={(e) =>
-                    setNewApprover({ ...newApprover, label: e.target.value })
-                  }
+                  onChange={handleApproverLabelChange}
                 />
                 <Button
                   variant="outline"
@@ -499,9 +529,9 @@ export default function CreateVaultPage() {
                     No staff yet
                   </div>
                 ) : (
-                  formData.staff.map((staffMember, index) => (
+                  formData.staff.map((staffMember) => (
                     <div
-                      key={index}
+                      key={staffMember.id}
                       className="flex items-center justify-between p-3 border border-border rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                     >
                       <div className="flex-1 min-w-0">
@@ -515,7 +545,7 @@ export default function CreateVaultPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeStaff(index)}
+                        onClick={() => removeStaff(staffMember.id)}
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -530,17 +560,13 @@ export default function CreateVaultPage() {
                 <Input
                   placeholder="Wallet address"
                   value={newStaff.address}
-                  onChange={(e) =>
-                    setNewStaff({ ...newStaff, address: e.target.value })
-                  }
+                  onChange={handleStaffAddressChange}
                   className="font-mono text-sm"
                 />
                 <Input
                   placeholder="Label (optional)"
                   value={newStaff.label}
-                  onChange={(e) =>
-                    setNewStaff({ ...newStaff, label: e.target.value })
-                  }
+                  onChange={handleStaffLabelChange}
                 />
                 <Button
                   variant="outline"
@@ -560,7 +586,7 @@ export default function CreateVaultPage() {
         <div className="flex gap-4 sticky bottom-6">
           <Button
             variant="outline"
-            onClick={() => router.push("/dashboard")}
+            onClick={handleCancel}
             disabled={loading}
             className="flex-1"
           >

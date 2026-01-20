@@ -5,3 +5,10 @@ target
 node_modules
 test-ledger
 .yarn
+
+# AI agent directories
+.agent/
+.claude/
+.codex/
+.cursor/
+.gemini/
