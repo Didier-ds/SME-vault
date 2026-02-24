@@ -165,36 +165,7 @@ Organized by domain:
 ## Project Structure
 
 ```
-sme-vault/                 # Anchor workspace root
-├── programs/
-│   └── sme-vault/
-│       ├── src/
-│       │   ├── lib.rs                     # Program entrypoint, instruction routing
-│       │   ├── constants.rs               # Global constants (seeds, max values)
-│       │   ├── error.rs                   # Custom error codes
-│       │   ├── state/
-│       │   │   ├── vault.rs               # Vault account definition
-│       │   │   └── withdrawal_request.rs  # Withdrawal request account
-│       │   └── instructions/
-│       │       ├── initialize.rs          # (unused)
-│       │       ├── create_vault.rs        # Vault creation
-│       │       ├── approvers/
-│       │       │   ├── add_approver.rs
-│       │       │   └── remove_approver.rs
-│       │       ├── staff/
-│       │       │   ├── add_staff.rs
-│       │       │   └── remove_staff.rs
-│       │       └── withdrawals/
-│       │           ├── request_withdrawal.rs
-│       │           ├── approve_withdrawal.rs
-│       │           └── execute_withdrawal.rs
-│       ├── Cargo.toml                     # Program dependencies
-│       └── Xargo.toml                     # Cross-compilation config
-├── tests/                                 # TypeScript integration tests
-│   ├── create-vault.ts
-│   ├── add-approver.ts
-│   ├── add-staff.ts
-│   ├── request-withdrawal.ts
+whats next
 │   ├── approve-withdrawal.ts
 │   └── execute-withdrawal.ts
 ├── migrations/                            # Anchor migration scripts (empty)

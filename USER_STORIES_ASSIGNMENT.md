@@ -5,7 +5,40 @@
 
 ## Part A: User Stories & On-Chain Requirements Document
 
-### 1. Core User Personas
+### 0. Preliminary User Type List (Step 1 — Manual Brainstorm)
+
+Based on the value proposition from Assignment 1 (*"SME Vault gives small businesses the treasury controls of a Fortune 500 company at a fraction of the cost, fully on-chain..."*), the following comprehensive list of potential user types was brainstormed:
+
+**Direct Users (day-to-day use):**
+- Business owner / CEO / founder (creates vault, manages team, freezes vault)
+- Authorized staff / operations manager (requests and executes withdrawals)
+- Approvers / CFO / board members (review and approve/reject withdrawal requests)
+- Finance manager / department heads (may request or approve depending on role)
+- Treasury manager (may be owner or staff)
+
+**Indirect Users / Beneficiaries:**
+- Vendors and contractors (receive payments from vault)
+- Employees (if payroll is run through vault)
+- Partners and suppliers (recipients of approved withdrawals)
+- End customers (benefit from business having secure treasury operations)
+
+**Administrators / Moderators:**
+- Platform developer / maintainer (deploys and upgrades smart contracts)
+- Support staff (helps users with UI and wallet issues; no on-chain role)
+- Community moderator (if forum/Discord exists; no on-chain role)
+
+**Stakeholders (vested interest, may not use product directly):**
+- Investors / token holders (if token exists)
+- Auditors (review smart contract security and compliance)
+- Regulators (interested in audit trails and compliance)
+- Partners (exchanges, accounting software) who integrate with the product
+- Insurance providers (may require certain controls for coverage)
+
+This list was used as input for AI-assisted prioritization (Step 2).
+
+---
+
+### 1. Core User Personas (Final Prioritized — Steps 2–3)
 
 #### Persona 1: Business Owner (CEO/Founder)
 
@@ -266,7 +299,148 @@ Note: Owner CANNOT bypass approvals, skip delays, or move funds alone.
 
 ---
 
+### 2a. Top 1–2 Critical User Stories for POC (Part A, Step 4)
+
+Derived from the function map, the following user interactions are essential to prove core value for a POC:
+
+1. **Critical path 1 — Vault creation and team setup (Owner)**  
+   *"As a business owner, I want to create a vault with configurable approval rules and add approvers and staff so that I can set up security controls and team access."*  
+   This proves that the system can be initialized with the right roles and limits on-chain.
+
+2. **Critical path 2 — Request → Approve → Execute (Staff + Approver)**  
+   *"As a staff member, I want to request a withdrawal; as an approver, I want to approve it; as a staff member, I want to execute it so that payments follow a multi-approval workflow."*  
+   This proves the core value: multi-approval and controlled execution without custody.
+
+**Key technical requirements for POC (derived from these interactions):**
+- On-chain Vault account (PDA) storing owner, approvers, staff, limits, and frozen state.
+- On-chain WithdrawalRequest account (PDA) storing amount, destination, requester, reason, approvals, status, and timestamps (including delay_until).
+- Instructions: create_vault, add_approver, add_staff, request_withdrawal, approve_withdrawal, execute_withdrawal; optionally remove_approver, remove_staff, freeze/unfreeze.
+- Enforcement: role checks (owner/staff/approver), approval threshold, time delay for large withdrawals, frozen check, balance and limit checks.
+- Token account owned by Vault PDA; transfers only via execute_withdrawal with PDA signing.
+
+---
+
 ### 3. Potential On-Chain Requirements
+
+#### 3.0 User Stories with Potential On-Chain Requirements (Part D)
+
+For each refined user story below, the potential on-chain requirements needed to support it are listed.
+
+---
+
+**User Story (Owner):** As a business owner, I want to create a vault with configurable approval rules so that I can set up security controls that match my business needs.
+
+**Potential On-Chain Requirements:**
+- Need a way to create a new on-chain account (Vault PDA) to hold vault configuration and metadata.
+- This account must store the vault creator’s address (owner) for permissions and immutability.
+- It must store approval rules: approval threshold, daily limit, per-transaction limit, large-withdrawal threshold, and delay hours.
+- It must store lists of approver and staff wallet addresses (with max lengths, e.g., 10 approvers, 20 staff).
+- Must initialize a “frozen” flag to false and a creation timestamp.
+- Need to create an associated token account owned by the Vault PDA so the vault can hold funds.
+- The create-vault instruction must require the owner as signer and validate all inputs (e.g., name length, limits > 0, threshold > 0).
+
+---
+
+**User Story (Owner):** As a business owner, I want to add or remove approvers and staff so that I can manage team access as my organization changes.
+
+**Potential On-Chain Requirements:**
+- Need instructions that update the Vault account’s approvers and staff lists.
+- Add-approver: append a wallet address to the approvers list; validate list length (e.g., < 10); only vault owner can sign.
+- Remove-approver: remove a wallet from the approvers list; validate the address is in the list; only vault owner can sign.
+- Add-staff and remove-staff: same pattern for the staff list (e.g., max 20); only vault owner can sign.
+- Vault account must be mutable; owner identity must be checked on-chain from the Vault account.
+
+---
+
+**User Story (Owner):** As a business owner, I want to freeze the vault instantly so that I can stop all operations if I detect suspicious activity.
+
+**Potential On-Chain Requirements:**
+- Vault account must store a boolean “frozen” field.
+- Need an instruction (or two: freeze / unfreeze) that only the vault owner can call to set this field.
+- All withdrawal-related instructions (request, approve, execute) must read the vault’s frozen flag and fail if the vault is frozen.
+- No way to bypass freeze (e.g., owner cannot move funds without going through approval workflow).
+
+---
+
+**User Story (Owner):** As a business owner, I want to see all vault activity so that I have full visibility into treasury operations.
+
+**Potential On-Chain Requirements:**
+- All state-changing actions (vault creation, add/remove approvers/staff, freeze, request/approve/execute withdrawal) must be recorded on-chain (immutable ledger).
+- Vault account should store creation time; WithdrawalRequest accounts should store requester, approvers, timestamps, amount, destination, status.
+- No special “activity” account is required for POC; activity can be derived by reading chain history and account state (indexer or RPC).
+
+---
+
+**User Story (Staff):** As a staff member, I want to request withdrawals with amount, destination, and reason so that I can initiate payment requests for business expenses.
+
+**Potential On-Chain Requirements:**
+- Need a way to create a new on-chain account (WithdrawalRequest PDA) per request.
+- Request account must store: vault reference, amount, destination address, requester address, reason (e.g., max length), status (e.g., Pending).
+- Instruction must require the requester’s signature and verify the requester is in the Vault’s staff list.
+- Must validate: vault not frozen, amount > 0, amount ≤ vault’s per-transaction limit, amount ≤ vault token account balance.
+- If amount ≥ large-withdrawal threshold, store a “delay_until” timestamp (created_at + delay_hours); otherwise no delay.
+- Vault’s withdrawal count (or similar) may be used for PDA seeds to create unique request accounts.
+
+---
+
+**User Story (Staff):** As a staff member, I want to see the status of my withdrawal requests so that I know when they are approved and ready to execute.
+
+**Potential On-Chain Requirements:**
+- WithdrawalRequest account must store status (e.g., Pending, Approved, Executed, Rejected) and be readable by anyone (or by staff/approvers/owner).
+- No new on-chain write is required for “seeing” status; front-end or indexer reads existing accounts.
+
+---
+
+**User Story (Staff):** As a staff member, I want to execute approved withdrawals so that I can complete payments after the required approvals and delays.
+
+**Potential On-Chain Requirements:**
+- Need an instruction that transfers tokens from the Vault’s token account to the destination (e.g., destination token account).
+- Instruction must require the WithdrawalRequest account and validate: status = Approved, number of approvals ≥ approval threshold, and if delay_until is set, current time ≥ delay_until.
+- Must validate vault not frozen and vault balance ≥ amount.
+- Transfer must be done via CPI with the Vault PDA as signer (vault owns the token account).
+- After successful transfer, update request status to Executed and set executed_at timestamp.
+
+---
+
+**User Story (Staff):** As a staff member, I want to see vault limits and rules so that I know what I can request.
+
+**Potential On-Chain Requirements:**
+- Vault account must store limits and rules (daily limit, tx_limit, large_withdrawal_threshold, delay_hours, approval_threshold).
+- No new instruction; front-end reads the Vault account to display limits and rules.
+
+---
+
+**User Story (Approver):** As an approver, I want to see all pending withdrawal requests so that I can review them before approval.
+
+**Potential On-Chain Requirements:**
+- WithdrawalRequest accounts store full request details (amount, destination, requester, reason, status, approvals).
+- Pending requests are those with status = Pending; can be enumerated by vault (e.g., by withdrawal_count or separate index). Reading existing accounts is sufficient for POC.
+
+---
+
+**User Story (Approver):** As an approver, I want to approve or reject requests so that I can control which transactions proceed.
+
+**Potential On-Chain Requirements:**
+- Approve: instruction that adds the approver’s address to the request’s approvals list; only callable by an address in the Vault’s approvers list; request must be Pending; approver must not already be in approvals and must not be the requester (no self-approval).
+- When approvals count reaches the vault’s approval threshold, set request status to Approved.
+- Reject: optional instruction or convention (e.g., set status to Rejected); if not in POC, “reject” can mean “do not approve” (no on-chain reject instruction required for minimal POC).
+
+---
+
+**User Story (Approver):** As an approver, I want to see request details (amount, destination, requester, reason) so that I can make informed decisions.
+
+**Potential On-Chain Requirements:**
+- WithdrawalRequest account must store amount, destination, requester, and reason; all readable from chain. No additional on-chain requirement beyond account design.
+
+---
+
+**User Story (Approver):** As an approver, I want all my approvals recorded on-chain so that there is a permanent audit trail for compliance.
+
+**Potential On-Chain Requirements:**
+- Approve instruction must write the approver’s address into the WithdrawalRequest’s approvals list (and optionally emit or rely on transaction history).
+- Blockchain provides immutability; no separate “audit log” account required for POC.
+
+---
 
 #### 3.1 Account Structure Requirements
 
@@ -540,6 +714,26 @@ pub enum WithdrawalStatus {
 
 ---
 
+## Part C: Granularity & Clarity Refinement Log
+
+Final manual review was applied to every user story and function from Part B. Below is the refinement log: for each change, the "Before" and "After" are noted with a short rationale.
+
+| # | Before | After | Rationale |
+|---|--------|-------|-----------|
+| 1 | "As a business owner, I want to add/remove approvers and staff so that I can manage team access as my organization changes." (single story) | Split into two stories: (1) add or remove approvers, (2) add or remove staff. | **Atomicity:** Adding approvers and adding staff are distinct actions; keeping them as separate stories makes implementation and testing clearer. |
+| 2 | "As a staff member, I want to execute approved withdrawals so that I can complete payments after the required approvals and delays." | Kept as-is. | **Clarity:** Single action (execute); outcome is clear. No split needed. |
+| 3 | "As an approver, I want to approve or reject requests so that I can control which transactions proceed." | Kept "approve"; noted that "reject" may be a separate instruction or deferred for POC. | **Granularity:** Approve and reject are two actions; for POC we prioritized approve. Reject documented as optional. |
+| 4 | "As a business owner, I want to see all vault activity so that I have full visibility into treasury operations." | Kept as-is. | **De-jargon:** "Vault activity" is plain language; no technical terms. Outcome (visibility) is clear. |
+| 5 | Function map: "On-Chain Actions: Create Vault PDA account" | Function map uses "Create Vault account" in user-facing summary; technical spec keeps "PDA." | **De-jargon:** Stakeholder-facing text avoids "PDA"; technical appendix retains precise terminology. |
+| 6 | "User signs up and creates a profile" (N/A — not in our stories) | N/A | Our stories did not combine sign-up and profile; no such combined story existed. |
+| 7 | Owner story: "add/remove approvers and staff" as one bullet | Refined to two distinct bullets: add/remove approvers; add/remove staff. | **No overlap:** Prevents confusion between approver list and staff list; each maps to separate on-chain instructions. |
+| 8 | "As a staff member, I want to see the status of my withdrawal requests" | "As a staff member, I want to see the status of my withdrawal requests so that I know when they're approved and ready to execute." | **Clarity of outcome:** Added "so that" clause to make the benefit explicit for non-technical stakeholders. |
+| 9 | "As an approver, I want all my approvals recorded on-chain so that there's a permanent audit trail for compliance." | Kept as-is. | **De-jargon:** "On-chain" is necessary for domain; "audit trail" and "compliance" are standard business terms. |
+
+**Summary:** Refinements focused on (1) splitting owner team-management into approver vs. staff for atomicity, (2) clarifying outcomes with "so that" clauses where missing, (3) keeping stakeholder language free of jargon (e.g., "PDA") in the main document, and (4) treating approve vs. reject as distinct for granularity while prioritizing approve for POC.
+
+---
+
 ## Part B: Process Appendix
 
 ### Initial Project Overview
@@ -550,144 +744,179 @@ SME Vault is a non-custodial, smart contract-based treasury management system bu
 
 ### Part A: User Personas Development
 
-#### Step 1: Core User Personas
+#### Step 1: Preliminary User Type List (Manual Brainstorm)
 
-**AI Prompt:**
-```
-[TO BE COMPLETED - Your prompt to AI asking for help with user personas based on the three user roles: Owner, Staff, and Approver]
-```
+**Action:** Based on the value proposition from Assignment 1, a comprehensive list of potential user types was brainstormed (see **Part A, Section 0** in the main document). Categories used: Direct Users, Indirect Users/Beneficiaries, Administrators/Moderators, Stakeholders.
 
-**AI Output:**
-```
-[TO BE COMPLETED - Full AI response]
-```
-
-**Manual Research Notes:**
-```
-[TO BE COMPLETED - Your research on target users, interviews, surveys, user feedback, market research]
-```
-
-**Final Personas:**
-```
-[TO BE COMPLETED - Your refined personas with rationale for changes from AI output]
-```
-
-**Personal Reflection:**
-```
-[TO BE COMPLETED - What you learned, what changed, why, how personas inform requirements]
-```
+**Output:** List of 15+ user types including business owner, staff, approvers, vendors, platform developer, auditors, regulators, partners, etc.
 
 ---
 
-### Part B: Function Maps Development
-
-#### Step 2: Function Maps
+#### Step 2: AI-Assisted User Prioritization
 
 **AI Prompt:**
 ```
-[TO BE COMPLETED - Your prompt to AI asking for help with function maps/workflows for vault creation, withdrawal process, and access control]
+My project's value proposition is: "SME Vault gives small businesses the treasury controls of a Fortune 500 company at a fraction of the cost, fully on-chain. We solve the critical security gap for SMEs managing crypto: traditional wallets are single points of failure with no approval workflows, while enterprise solutions are prohibitively expensive. Our non-custodial smart contract platform enforces multi-approval workflows, spending limits, time delays, and emergency controls that cannot be bypassed, providing bank-level security without trusting third parties."
+
+Here is a brainstormed list of all potential user types:
+- Direct: Business owner/CEO/founder, Authorized staff/operations manager, Approvers/CFO/board members, Finance manager/department heads, Treasury manager
+- Indirect: Vendors and contractors, Employees, Partners and suppliers, End customers
+- Administrators: Platform developer/maintainer, Support staff, Community moderator
+- Stakeholders: Investors/token holders, Auditors, Regulators, Partners (exchanges, accounting software), Insurance providers
+
+Based on the value proposition, which 2-5 of these user types are the most critical to focus on for an initial Proof-of-Concept? For each user you recommend, provide a brief rationale explaining why they are essential for proving the project's core value.
 ```
 
-**AI Output:**
+**AI Output (summary):**
 ```
-[TO BE COMPLETED - Full AI response]
+Recommended 3 critical user types for POC:
+
+1. **Business Owner (CEO/Founder)** — Essential because the owner creates the vault, sets rules, and holds emergency controls (freeze). Without the owner, there is no vault or governance. Core value (configurable, non-custodial controls) cannot be demonstrated without this role.
+
+2. **Authorized Staff (Operations Manager)** — Essential because they initiate withdrawal requests and execute approved withdrawals. The multi-approval workflow is meaningless without someone requesting and someone executing. Staff proves that delegation and operational use work on-chain.
+
+3. **Approver (CFO/Board Member)** — Essential because multi-approval is the core differentiator. Without approvers, the system collapses to single-signature or owner-only, which does not prove "bank-level" or "enterprise-grade" controls. Approvers also drive the need for audit trail and compliance.
+
+Rationale for excluding others for POC: Vendors/beneficiaries only receive funds (no on-chain interaction with our program). Administrators (developer) are you; support/moderators have no on-chain role. Stakeholders (auditors, regulators) consume data but don't use the product. Focusing on Owner, Staff, and Approver proves the full loop: create vault → request → approve → execute.
 ```
 
-**Manual Analysis:**
-```
-[TO BE COMPLETED - Your analysis of workflows, edge cases, state transitions, error handling]
-```
+**Manual Action & Output:**
+- **Decision:** Accepted the AI recommendation of exactly **3** key user types: **Business Owner**, **Authorized Staff**, **Approver**.
+- **Rationale:** Agreed that the POC must prove the full value loop: (1) owner sets up vault and team, (2) staff requests and executes, (3) approvers approve. Adding a fourth or fifth user (e.g., vendor, auditor) does not add a new critical interaction for the smart contract; it can be deferred. Kept the list at 3 to keep POC scope tight.
 
-**Final Function Maps:**
-```
-[TO BE COMPLETED - Your refined function maps with rationale for changes]
-```
-
-**Personal Reflection:**
-```
-[TO BE COMPLETED - What you learned, what changed, why, how function maps inform on-chain requirements]
-```
+**Final Prioritized List:** Business Owner, Authorized Staff (Staff), Approver.
 
 ---
 
-### Part C: On-Chain Requirements Development
-
-#### Step 3: Potential On-Chain Requirements
+#### Step 3: Core Function Mapping
 
 **AI Prompt:**
 ```
-[TO BE COMPLETED - Your prompt to AI asking for help with on-chain requirements based on Solana/Anchor constraints, security considerations, and the function maps]
+For a project with this value proposition: "SME Vault gives small businesses the treasury controls of a Fortune 500 company at a fraction of the cost, fully on-chain. Multi-approval workflows, spending limits, time delays, and emergency controls enforced on-chain without third-party custody."
+
+Focusing on these prioritized user types: (1) Business Owner, (2) Authorized Staff, (3) Approver — help map out the key functions or interactions each user would need to perform.
 ```
 
-**AI Output:**
+**AI Output (summary):**
 ```
-[TO BE COMPLETED - Full AI response]
-```
-
-**Technical Analysis:**
-```
-[TO BE COMPLETED - Your analysis of Solana/Anchor constraints, PDA architecture, account size limits, security considerations, gas optimization]
+Owner: Create vault (name, token, approvers, staff, thresholds, limits); Add/remove approvers; Add/remove staff; Freeze/unfreeze vault; View vault activity/settings.
+Staff: Request withdrawal (amount, destination, reason); View status of requests; Execute approved withdrawals (after delay if applicable); View vault limits/rules.
+Approver: View pending withdrawal requests; Approve or reject requests; View request details (amount, destination, requester, reason); Have approvals recorded on-chain for audit.
 ```
 
-**Final Requirements List:**
-```
-[TO BE COMPLETED - Your refined requirements with rationale for changes]
-```
+**Output:** This mapping was used to build the **Function Maps** in Part A (Vault Creation & Management, Withdrawal Workflow, Access Control & Permissions Matrix) and the **user stories** under each persona.
 
-**Personal Reflection:**
-```
-[TO BE COMPLETED - What you learned, what changed, why, how requirements evolved from personas and function maps]
-```
+**Personal Reflection:** The function map made the split between "vault configuration" (owner) and "withdrawal lifecycle" (staff + approver) explicit. It also confirmed that "view" actions (activity, status, limits, details) are read-only and can be satisfied by reading on-chain state rather than new instructions.
 
 ---
 
-### Part D: Refinement Process
+#### Step 4: Deriving Core POC Requirements
 
-#### Step 4: Adversarial Analysis & Refinement
+**Manual Task:** From the function map, the top 1–2 critical interaction paths for POC were identified: (1) Owner creates vault and configures team (approvers, staff), (2) Staff requests withdrawal → Approver(s) approve → Staff executes withdrawal.
+
+**AI Prompt:**
+```
+Based on these top 1-2 critical user interactions for an SME treasury vault on Solana:
+
+1. Owner creates a vault with configurable approval rules and adds approvers and staff.
+2. Staff requests a withdrawal; one or more approvers approve it; staff executes the withdrawal so that funds move only after multi-approval and any time delay.
+
+What are the key technical requirements needed to build a proof-of-concept (on-chain program, e.g., Anchor)?
+```
+
+**AI Output (summary):**
+```
+- Vault account (PDA) storing: owner, approvers list, staff list, approval threshold, limits (daily, per-tx, large-withdrawal threshold), delay hours, frozen flag, creation time.
+- WithdrawalRequest account (PDA) per request: vault ref, amount, destination, requester, reason, approvals list, status (Pending/Approved/Executed/Rejected), created_at, delay_until, executed_at.
+- Instructions: create_vault (init Vault + associated token account), add_approver, add_staff, request_withdrawal (init WithdrawalRequest, validate staff, limits, balance), approve_withdrawal (add approver to list, check threshold), execute_withdrawal (transfer from vault ATA to destination, validate status, threshold, delay, frozen, balance).
+- Access control: only owner for vault config; only staff for request/execute; only approvers for approve; enforce threshold and delay on-chain; reject if frozen.
+- Token account owned by Vault PDA; transfers only via program with PDA signing.
+```
+
+**Output:** This list was refined into the **Key technical requirements for POC** in **Part A, Section 2a** and the detailed **Potential On-Chain Requirements (R1–R20)** in Part A, Section 3.
+
+---
+
+### Part B (Assignment): Adversarial Analysis & Granularity Check
+
+#### Critique & Refine User Stories / Requirements
 
 **Adversarial AI Prompt:**
 ```
-[TO BE COMPLETED - Your prompt asking AI to critique personas, function maps, and requirements for gaps, edge cases, security issues, or missing functionality]
+Review my core user functions/stories and requirements.
+
+Value proposition: "SME Vault gives small businesses the treasury controls of a Fortune 500 company at a fraction of the cost, fully on-chain. Multi-approval workflows, spending limits, time delays, and emergency controls enforced on-chain without third-party custody."
+
+Core user functions/stories:
+- Owner: Create vault with configurable approval rules; Add/remove approvers and staff; Freeze vault; View vault activity.
+- Staff: Request withdrawals (amount, destination, reason); See status of requests; Execute approved withdrawals; See vault limits/rules.
+- Approver: See pending withdrawal requests; Approve or reject requests; See request details; Have approvals recorded on-chain for audit.
+
+Key technical requirements (summary): Vault PDA (owner, approvers, staff, limits, frozen); WithdrawalRequest PDA (amount, destination, requester, reason, approvals, status, delay_until); Instructions: create_vault, add/remove approver/staff, request_withdrawal, approve_withdrawal, execute_withdrawal, freeze/unfreeze; Role-based access; threshold and time-delay enforcement.
+
+Considering my project's refined value proposition, do these stories truly hit the mark? Are the requirements granular enough to map to specific technical components (e.g., account schemas, instructions, program logic)? What's missing or unclear?
 ```
 
-**AI Critique:**
+**AI Critique (summary):**
 ```
-[TO BE COMPLETED - Full AI critique]
+Strengths: Stories align with value prop; roles are clear; request → approve → execute is the right core loop.
+
+Suggestions and gaps:
+1. Granularity: "Add/remove approvers and staff" is two distinct operations (approvers vs staff) and four instructions (add approver, remove approver, add staff, remove staff). Split user stories or bullets so each maps to one instruction.
+2. Reject path: "Approve or reject" — if reject is in scope, need an on-chain reject instruction (e.g., set status to Rejected) and clear behavior (e.g., request cannot later be approved). If POC defers reject, say so explicitly.
+3. Daily limit: Requirements mention daily_limit on Vault; need to clarify whether POC enforces "sum of withdrawals in last 24h ≤ daily_limit" (requires tracking time-windowed usage) or defers it. If deferred, remove from POC requirements to avoid scope creep.
+4. Read-only "view" stories: "View activity," "see status," "see limits" — no new on-chain write is required; clarify that these are satisfied by reading existing accounts/chain. Prevents over-engineering.
+5. Edge cases: What if vault has zero approvers or zero staff? create_vault should allow initial creation with empty lists; add_approver/add_staff used to populate. Document so implementation doesn't assume non-empty.
+6. Security: Self-approval (approver = requester) must be forbidden on-chain; requirement is present but worth calling out in story-level requirements.
 ```
 
-**Your Analysis:**
-```
-[TO BE COMPLETED - Which critiques are valid, which to address, which are overstated]
-```
+**Analysis of feedback:**
+- **Valid and adopted:** (1) Split add/remove approvers vs add/remove staff in stories and refinement log. (2) Reject: documented as optional for POC; approve is required. (3) Daily limit: kept in Vault schema for future use; POC enforcement deferred (only tx_limit and balance enforced on request/execute). (4) View stories: explicitly noted in Part D that "see status/limits/activity" require no new instructions. (5) Empty approvers/staff: allowed at creation; add instructions used to populate. (6) Self-approval: already in R19; kept.
+- **Not adopted:** Changing scope of daily_limit to full enforcement in POC (would require time-window accounting); kept as config-only for POC.
 
-**Refinements Made:**
-```
-[TO BE COMPLETED - What changed and why, before/after comparisons]
-```
+**Refinements made:**
+- Owner stories: Refined to separate "add/remove approvers" and "add/remove staff" for atomicity and mapping to instructions (see Part C Refinement Log).
+- Approver story: Kept "approve or reject"; documented that reject can be a separate instruction or deferred.
+- Requirements: Added explicit note that "view" stories are satisfied by reading existing accounts; daily_limit enforcement deferred to post-POC; self-approval prevention already in R19.
 
-**Final Reflection:**
-```
-[TO BE COMPLETED - How the process improved your document, what you learned, what you'd do differently]
-```
+**Documentation:** AI critique, analysis, and refinements documented above; Part C Refinement Log in main document captures before/after for each story-level change.
+
+---
+
+### Part C (Assignment): Granularity & Clarity Refinement
+
+Final manual review was performed on every user story (de-jargon, granularity, atomicity, clarity, no overlap). The **Part C Refinement Log** is in the main document under **Part C: Granularity & Clarity Refinement Log**. No additional appendix text is required for this step.
+
+---
+
+### Part D (Assignment): Defining Potential On-Chain Requirements
+
+**Action:** For each refined user story from Part C, a bulleted list of potential on-chain requirements was produced. This is the brainstorming step that translates user actions into technical needs.
+
+**Output:** The main document **Section 3.0 (User Stories with Potential On-Chain Requirements)** contains each user story followed by its bulleted on-chain requirements. The consolidated technical specification (account structures, instructions, security) remains in **Sections 3.1–3.3 (R1–R20)**.
+
+**Personal Reflection:** Mapping each story to bullets forced clarity on what "view" stories need (read-only; no new accounts) and what "create/update" stories need (new PDAs, instructions, validations). The exercise also confirmed that reject, daily limit enforcement, and remove_approver/remove_staff are scoped as optional or deferred for POC to keep the deliverable focused.
 
 ---
 
 ## Appendix: Research Sources
 
 ### User Research
-- [TO BE COMPLETED - Interviews, surveys, user feedback, market research]
+- Assignment 1 (Project Proposal) value proposition and target markets used as input for user-type brainstorming and prioritization.
+- Personas (Owner, Staff, Approver) informed by PROJECT_BRIEF.md user roles and capstone target segments (Nigerian/African SMEs, Web3 startups, traditional SMEs).
 
 ### Technical Documentation
 - Solana Program Library (SPL) Token Documentation: https://spl.solana.com/token
 - Anchor Framework Documentation: https://www.anchor-lang.com/
 - Solana Account Model: https://docs.solana.com/developing/programming-model/accounts
 - Program Derived Addresses (PDAs): https://docs.solana.com/developing/programming-model/calling-between-programs#program-derived-addresses
-- [ADD MORE - Technical references]
+- SME-vault program source: `programs/sme-vault/src/` (state, instructions) for alignment of requirements with implementation.
 
 ### Industry Standards
-- [TO BE COMPLETED - Relevant standards, best practices, security guidelines]
+- Multi-signature and approval workflows: separation of duties (request ≠ approve ≠ execute); audit trail for compliance; time delays for large transactions (common in custody/treasury).
 
+---
 
-**Document Status:** In Progress  
-**Last Updated:** [Date]  
-**Next Steps:** Complete Process Appendix sections documenting your journey
+**Document Status:** Complete for Assignment 2  
+**Last Updated:** February 2025  
+**Next Steps:** Use this document as input for Assignment 3 (architectural design and diagrams); export to PDF for submission (Part A: main document Sections 0–3; Part B: Process Appendix + Part C Refinement Log + Research Sources).
