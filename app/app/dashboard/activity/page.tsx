@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVaultContext } from "@/src/contexts/VaultContext";
 import { useWithdrawals, useVaultTransactions } from "@/src/hooks";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { AlertCircle, ArrowLeft, Activity, ExternalLink, ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PublicKey } from "@solana/web3.js";
@@ -29,9 +28,7 @@ interface TransactionActivity {
 
 export default function ActivityPage() {
   const router = useRouter();
-  const { selectedVaultAddress, selectedVault, vaultsLoading, tokenMint, tokenDecimals } = useVaultContext();
-  const { publicKey } = useWallet();
-  const { connection } = useConnection();
+  const { selectedVaultAddress, selectedVault, vaultsLoading, tokenMint, tokenDecimals, tokenSymbol } = useVaultContext();
 
   const { withdrawals, loading: withdrawalsLoading, error: withdrawalsError } = useWithdrawals(
     selectedVaultAddress || undefined
@@ -39,7 +36,8 @@ export default function ActivityPage() {
 
   const { transactions: blockchainTransactions, loading: transactionsLoading, error: transactionsError } = useVaultTransactions(
     selectedVaultAddress || undefined,
-    tokenMint
+    tokenMint,
+    tokenSymbol
   );
 
   const loading = withdrawalsLoading || transactionsLoading || vaultsLoading;
@@ -74,7 +72,7 @@ export default function ActivityPage() {
         withdrawalPublicKey: withdrawal.publicKey,
         amount: withdrawal.amount,
         actor: withdrawal.requester,
-        description: `Requested withdrawal of ${(withdrawal.amount.toNumber() / Math.pow(10, tokenDecimals || 6)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC`,
+        description: `Requested withdrawal of ${(withdrawal.amount.toNumber() / Math.pow(10, tokenDecimals || 6)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${tokenSymbol}`,
         status: withdrawal.status,
       });
 
@@ -101,7 +99,7 @@ export default function ActivityPage() {
           withdrawalPublicKey: withdrawal.publicKey,
           amount: withdrawal.amount,
           actor: withdrawal.requester, // Executor is typically the requester or staff
-          description: `Executed withdrawal of ${(withdrawal.amount.toNumber() / Math.pow(10, tokenDecimals || 6)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC`,
+          description: `Executed withdrawal of ${(withdrawal.amount.toNumber() / Math.pow(10, tokenDecimals || 6)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${tokenSymbol}`,
           status: withdrawal.status,
         });
       }
@@ -125,7 +123,7 @@ export default function ActivityPage() {
 
     // Sort by timestamp (newest first)
     return activityList.sort((a, b) => b.timestamp - a.timestamp);
-  }, [withdrawals, blockchainTransactions, tokenDecimals]);
+  }, [withdrawals, blockchainTransactions, tokenDecimals, tokenSymbol]);
 
   const formatAddress = (address: PublicKey) => {
     const str = address.toString();

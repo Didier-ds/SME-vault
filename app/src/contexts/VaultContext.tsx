@@ -4,6 +4,9 @@ import type { VaultContextType } from "../types/vault";
 import { useVaults } from "../hooks/useVaults";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { useMemo, useState, useEffect, createContext, useContext } from "react";
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import { mplTokenMetadata, fetchDigitalAsset } from "@metaplex-foundation/mpl-token-metadata";
+import { publicKey as umiPublicKey } from "@metaplex-foundation/umi";
 
 const VaultContext = createContext<VaultContextType | undefined>(undefined);
 
@@ -71,6 +74,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
 
   // Token decimals state (needs to be fetched async)
   const [tokenDecimals, setTokenDecimals] = useState(6);
+  const [tokenSymbol, setTokenSymbol] = useState<string>("Token");
+  const [tokenName, setTokenName] = useState<string>("Token");
 
   // Fetch token decimals when tokenMint changes
   useEffect(() => {
@@ -95,6 +100,49 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadTokenDecimals();
+  }, [tokenMint, connection]);
+
+  // Fetch token metadata (symbol, name) when tokenMint changes
+  useEffect(() => {
+    async function loadTokenMetadata() {
+      if (!tokenMint) {
+        setTokenSymbol("Token");
+        setTokenName("Token");
+        return;
+      }
+
+      try {
+        const conn = connection as { _rpcEndpoint?: string; rpcEndpoint?: string };
+        const endpoint =
+          conn._rpcEndpoint ||
+          conn.rpcEndpoint ||
+          process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
+          "https://api.devnet.solana.com";
+
+        const umi = createUmi(endpoint).use(mplTokenMetadata());
+        const asset = await fetchDigitalAsset(umi, umiPublicKey(tokenMint.toString()));
+
+        const rawSymbol = asset.metadata.symbol ?? "";
+        const rawName = asset.metadata.name ?? "";
+
+        const symbol = rawSymbol.trim() || "Token";
+        const name =
+          rawName.trim() ||
+          (symbol !== "Token" ? symbol : `${tokenMint.toString().slice(0, 4)}...${tokenMint
+            .toString()
+            .slice(-4)}`);
+
+        setTokenSymbol(symbol);
+        setTokenName(name);
+      } catch (err) {
+        console.error("Error loading token metadata:", err);
+        const mintStr = tokenMint.toString();
+        setTokenSymbol("Token");
+        setTokenName(`${mintStr.slice(0, 4)}...${mintStr.slice(-4)}`);
+      }
+    }
+
+    loadTokenMetadata();
   }, [tokenMint, connection]);
 
   // Compute multiplier and divisor from decimals (derived properties)
@@ -122,6 +170,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     tokenDecimals,
     decimalMultiplier,
     decimalDivisor,
+    tokenSymbol,
+    tokenName,
   };
 
   return (

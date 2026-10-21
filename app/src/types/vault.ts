@@ -56,5 +56,7 @@ export interface VaultContextType {
   tokenDecimals: number;
   decimalMultiplier: number;
   decimalDivisor: number;
+  tokenSymbol: string;
+  tokenName: string;
 }
 

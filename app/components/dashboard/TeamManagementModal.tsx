@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProgram } from "../../src/hooks";
 import { useVaultContext } from "../../src/contexts/VaultContext";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, UserPlus, X, Loader2 } from "lucide-react";
+import { Users, UserPlus, X, Loader2, Settings2, Minus, Plus } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 interface TeamManagementModalProps {
@@ -32,7 +33,14 @@ export function TeamManagementModal({
 
   const [staffInput, setStaffInput] = useState("");
   const [approverInput, setApproverInput] = useState("");
+  const [thresholdValue, setThresholdValue] = useState(1);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedVault) {
+      setThresholdValue(selectedVault.approvalThreshold);
+    }
+  }, [selectedVault?.approvalThreshold, selectedVault?.approvers?.length]);
 
   // Add staff member
   const handleAddStaff = async () => {
@@ -200,6 +208,51 @@ export function TeamManagementModal({
     }
   };
 
+  // Update approval threshold
+  const handleUpdateThreshold = async () => {
+    if (!program || !publicKey || !selectedVault || !selectedVaultAddress) return;
+
+    if (thresholdValue === selectedVault.approvalThreshold) {
+      toast.error("Threshold is already set to this value");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const vaultPubkey = new PublicKey(selectedVaultAddress);
+      const signature = await program.methods
+        .updateApprovalThreshold(thresholdValue)
+        .accounts({
+          vault: vaultPubkey,
+          owner: publicKey,
+        })
+        .rpc();
+
+      console.log("✅ Approval threshold updated, tx:", signature);
+
+      const solscanUrl = `https://solscan.io/tx/${signature}?cluster=devnet`;
+      toast.success("Approval threshold updated!", {
+        description: (
+          <a
+            href={solscanUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline inline-flex items-center gap-1"
+          >
+            View on Solscan →
+          </a>
+        ),
+      });
+      refetchVaults();
+    } catch (err) {
+      console.error("Error updating approval threshold:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to update approval threshold");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Remove approver
   const handleRemoveApprover = async (approverPubkey: PublicKey) => {
     if (!program || !publicKey || !selectedVault || !selectedVaultAddress) return;
@@ -354,6 +407,50 @@ export function TeamManagementModal({
             <p className="text-sm text-muted-foreground">
               People who can approve withdrawal requests (threshold: {selectedVault.approvalThreshold})
             </p>
+
+            {/* Update Approval Threshold */}
+            <div className="flex flex-wrap items-center gap-2 p-3 border border-border rounded-lg bg-white/5">
+              <Label className="text-xs shrink-0">Required approvals (M-of-N)</Label>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  onClick={() => setThresholdValue((v) => Math.max(1, v - 1))}
+                  disabled={loading || thresholdValue <= 1}
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <span className="font-mono text-lg font-medium min-w-[2ch] text-center tabular-nums">
+                  {thresholdValue}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  onClick={() => setThresholdValue((v) => Math.min(selectedVault.approvers.length || 10, v + 1))}
+                  disabled={loading || thresholdValue >= (selectedVault.approvers.length || 1)}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleUpdateThreshold}
+                disabled={loading || thresholdValue === selectedVault.approvalThreshold}
+                className="gap-2"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Settings2 className="w-4 h-4" />
+                )}
+                Update
+              </Button>
+            </div>
 
             {/* Approvers List */}
             <div className="space-y-2">

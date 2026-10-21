@@ -7,7 +7,7 @@ import { PublicKey } from "@solana/web3.js";
 import idl from "../idl/sme_vault.json";
 import type { SmeVault } from "../types/sme_vault";
 
-// Program ID from Anchor.toml
+// Program ID from Anchor.toml (must match deployed program)
 const PROGRAM_ID = new PublicKey("A5nASa3jpqhhpSLmqWayd4GnW8RRe38LCncz5GZmT4Mi");
 
 export function useProgram() {

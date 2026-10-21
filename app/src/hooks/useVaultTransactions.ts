@@ -17,7 +17,8 @@ export interface VaultTransaction {
 
 export function useVaultTransactions(
   vaultAddress?: string,
-  tokenMint?: PublicKey | null
+  tokenMint?: PublicKey | null,
+  tokenSymbol: string = "Token"
 ) {
   const { connection } = useConnection();
   const [transactions, setTransactions] = useState<VaultTransaction[]>([]);
@@ -163,7 +164,7 @@ export function useVaultTransactions(
                         timestamp,
                         type: "deposit",
                         amount: Math.abs(amount),
-                        description: `Deposited ${Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC`,
+                        description: `Deposited ${Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${tokenSymbol}`,
                       });
                     } else if (amount < 0) {
                       // Withdrawal
@@ -172,7 +173,7 @@ export function useVaultTransactions(
                         timestamp,
                         type: "withdrawal",
                         amount: Math.abs(amount),
-                        description: `Withdrew ${Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC`,
+                        description: `Withdrew ${Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${tokenSymbol}`,
                       });
                     }
                   }
@@ -204,7 +205,7 @@ export function useVaultTransactions(
                           timestamp,
                           type: "deposit",
                           amount: Math.abs(amount),
-                          description: `Deposited ${Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC`,
+                          description: `Deposited ${Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${tokenSymbol}`,
                         });
                       } else if (amount < 0) {
                         transactionDetails.push({
@@ -212,7 +213,7 @@ export function useVaultTransactions(
                           timestamp,
                           type: "withdrawal",
                           amount: Math.abs(amount),
-                          description: `Withdrew ${Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC`,
+                          description: `Withdrew ${Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${tokenSymbol}`,
                         });
                       }
                     }
@@ -253,7 +254,7 @@ export function useVaultTransactions(
     };
 
     fetchTransactions();
-  }, [connection, vaultAddress, tokenMint]);
+  }, [connection, vaultAddress, tokenMint, tokenSymbol]);
 
   return {
     transactions,

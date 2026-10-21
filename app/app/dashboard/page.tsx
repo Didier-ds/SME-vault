@@ -9,9 +9,6 @@ import { WithdrawalRequestModal } from "@/components/dashboard/WithdrawalRequest
 import { WalletConnectionDialog } from "@/components/dashboard/WalletConnectionDialog";
 import { useVaultContext } from "../../src/contexts/VaultContext";
 import { useUserRole } from "../../src/hooks";
-import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
-
 export default function DashboardPage() {
   const router = useRouter();
   const { selectedVaultAddress, vaults, selectedVault, vaultBalance: balance, vaultTokenAccount: tokenAccountAddress, vaultsLoading: loading, vaultError: error } = useVaultContext();
@@ -43,22 +40,10 @@ export default function DashboardPage() {
         loading={loading}
         error={error}
         isOwner={isOwner}
+        isStaff={isStaff}
         onManageTeam={() => setTeamModalOpen(true)}
+        onRequestWithdrawal={() => setWithdrawalModalOpen(true)}
       />
-
-      {/* Action Buttons */}
-      {selectedVaultAddress && isStaff && selectedVault && (
-        <div className="flex gap-3 justify-end">
-          <Button
-            onClick={() => setWithdrawalModalOpen(true)}
-            className="gap-2"
-            variant="default"
-          >
-            <Send className="w-4 h-4" />
-            Request Withdrawal
-          </Button>
-        </div>
-      )}
 
       {/* Withdrawal Requests */}
       <section className="space-y-4 mt-5">

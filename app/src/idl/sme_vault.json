@@ -631,6 +631,62 @@
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "update_approval_threshold",
+      "discriminator": [
+        2,
+        101,
+        216,
+        160,
+        209,
+        176,
+        110,
+        160
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "Vault"
+              },
+              {
+                "kind": "account",
+                "path": "vault.name",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "approval_threshold",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [

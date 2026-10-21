@@ -42,7 +42,7 @@ export function WithdrawalCard({
   onActionComplete,
 }: WithdrawalCardProps) {
   const { program } = useProgram();
-  const { tokenDecimals } = useVaultContext();
+  const { tokenDecimals, tokenSymbol } = useVaultContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,9 +88,9 @@ export function WithdrawalCard({
   };
 
   const formatAmount = (amount: anchor.BN) => {
-    const decimals = tokenDecimals || 6; // Default to 6 for USDC
-    const amountInUsdc = amount.toNumber() / Math.pow(10, decimals);
-    return amountInUsdc.toLocaleString("en-US", { 
+    const decimals = tokenDecimals || 6;
+    const amountHuman = amount.toNumber() / Math.pow(10, decimals);
+    return amountHuman.toLocaleString("en-US", { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     });
@@ -293,7 +293,7 @@ export function WithdrawalCard({
           {/* Amount and Status */}
           <div className="flex items-center gap-3">
             <div className="text-2xl font-light text-primary">
-              ${formatAmount(withdrawal.amount)}
+              {formatAmount(withdrawal.amount)} {tokenSymbol}
             </div>
             <Badge className={`${config.color} flex items-center gap-1`}>
               <StatusIcon className="w-3 h-3" />

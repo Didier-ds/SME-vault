@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
-// Default USDC Devnet Mint Address
+// Default token mint (e.g. USDC Devnet)
 const DEFAULT_MINT = "Cs9XJ317LyuWhxe3DEsA4RCZuHtj8DjNgFJ29VqrKYX9";
 
 interface TeamMember {
@@ -61,7 +61,7 @@ export default function CreateVaultPage() {
 
   const [formData, setFormData] = useState<VaultFormData>({
     name: "",
-    approvalThreshold: "2",
+    approvalThreshold: "1",
     dailyLimit: "10000",
     txLimit: "5000",
     largeWithdrawalThreshold: "3000",
@@ -186,11 +186,21 @@ export default function CreateVaultPage() {
       const provider = program.provider as anchor.AnchorProvider;
       const owner = provider.wallet.publicKey;
 
-      // Derive vault PDA
+      // Derive vault PDA (same seeds as program: vault + owner + name)
       const [vaultPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("vault"), owner.toBuffer(), Buffer.from(formData.name)],
         program.programId
       );
+
+      // Check if a vault with this name already exists (same owner + name = same PDA)
+      const existingVault = await provider.connection.getAccountInfo(vaultPda);
+      if (existingVault) {
+        setError(
+          `A vault named "${formData.name}" already exists for your wallet. Please choose a different name.`
+        );
+        setLoading(false);
+        return;
+      }
 
       // Derive vault token account
       const tokenMint = new PublicKey(formData.tokenMint);
@@ -275,7 +285,18 @@ export default function CreateVaultPage() {
       setTimeout(() => router.push("/dashboard"), 1500);
     } catch (err) {
       console.error("Error creating vault:", err);
-      setError(err instanceof Error ? err.message : "Failed to create vault");
+      const msg = err instanceof Error ? err.message : String(err);
+      const logs = typeof (err as { getLogs?: () => string[] })?.getLogs === "function"
+        ? (err as { getLogs: () => string[] }).getLogs?.()?.join(" ") ?? ""
+        : "";
+      const isAlreadyExists =
+        msg.includes("already in use") ||
+        logs.includes("already in use");
+      setError(
+        isAlreadyExists
+          ? `A vault named "${formData.name}" already exists for your wallet. Please choose a different name.`
+          : msg || "Failed to create vault"
+      );
     } finally {
       setLoading(false);
     }
@@ -357,7 +378,7 @@ export default function CreateVaultPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dailyLimit">Daily Limit (USDC)</Label>
+              <Label htmlFor="dailyLimit">Daily Limit (Token)</Label>
               <Input
                 id="dailyLimit"
                 type="number"
@@ -368,7 +389,7 @@ export default function CreateVaultPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="txLimit">Transaction Limit (USDC)</Label>
+              <Label htmlFor="txLimit">Transaction Limit (Token)</Label>
               <Input
                 id="txLimit"
                 type="number"
@@ -379,7 +400,7 @@ export default function CreateVaultPage() {
             </div>
 
             <div className="col-span-2 space-y-2">
-              <Label htmlFor="largeThreshold">Large Withdrawal Threshold (USDC)</Label>
+              <Label htmlFor="largeThreshold">Large Withdrawal Threshold (Token)</Label>
               <Input
                 id="largeThreshold"
                 type="number"
@@ -416,7 +437,7 @@ export default function CreateVaultPage() {
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Default: Custom USDC on Solana Devnet
+              Default: Custom token on Solana Devnet (e.g. USDC or USDT mint)
             </p>
           </div>
         </Card>

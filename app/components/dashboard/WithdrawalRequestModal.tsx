@@ -38,7 +38,7 @@ export function WithdrawalRequestModal({
   onSuccess,
 }: WithdrawalRequestModalProps) {
   const { program } = useProgram();
-  const { decimalMultiplier } = useVaultContext();
+  const { decimalMultiplier, tokenSymbol } = useVaultContext();
 
   const [amount, setAmount] = useState("");
   const [destination, setDestination] = useState("");
@@ -66,7 +66,7 @@ export function WithdrawalRequestModal({
     }
 
     if (amountNum > vaultData.txLimit.toNumber()) {
-      setError(`Amount exceeds transaction limit (${vaultData.txLimit.toString()} USDC)`);
+      setError(`Amount exceeds transaction limit (${vaultData.txLimit.toString()} ${tokenSymbol})`);
       return;
     }
 
@@ -151,7 +151,7 @@ export function WithdrawalRequestModal({
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (USDC) *</Label>
+            <Label htmlFor="amount">Amount ({tokenSymbol}) *</Label>
             <Input
               id="amount"
               type="number"
@@ -163,7 +163,7 @@ export function WithdrawalRequestModal({
               required
             />
             <p className="text-xs text-muted-foreground">
-              Transaction limit: {vaultData.txLimit.toString()} USDC
+              Transaction limit: {vaultData.txLimit.toString()} {tokenSymbol}
             </p>
           </div>
 

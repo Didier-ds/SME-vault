@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle2, XCircle, AlertCircle, Shield, Loader2 } from "lucide-react";
 import { useProgram, useUserRole } from "../../src/hooks";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useVaultContext } from "../../src/contexts/VaultContext";
 import { PublicKey } from "@solana/web3.js";
 import { toast } from "sonner";
 
@@ -19,6 +20,7 @@ export function WithdrawalRequestCard({ request }: WithdrawalRequestCardProps) {
   const { program } = useProgram();
   const { publicKey } = useWallet();
   const { isApprover } = useUserRole();
+  const { tokenSymbol } = useVaultContext();
   
   const [loading, setLoading] = useState(false);
 
@@ -131,7 +133,7 @@ export function WithdrawalRequestCard({ request }: WithdrawalRequestCardProps) {
           {/* Amount and Status */}
           <div className="flex items-center gap-3">
             <div className="text-2xl font-light text-primary">
-              ${request.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {request.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {tokenSymbol}
             </div>
             <Badge className={`${config.color} flex items-center gap-1`}>
               <StatusIcon className="w-3 h-3" />

@@ -637,6 +637,62 @@ export type SmeVault = {
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "updateApprovalThreshold",
+      "discriminator": [
+        2,
+        101,
+        216,
+        160,
+        209,
+        176,
+        110,
+        160
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "vault"
+              },
+              {
+                "kind": "account",
+                "path": "vault.name",
+                "account": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "approvalThreshold",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [

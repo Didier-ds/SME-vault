@@ -6,8 +6,9 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useUserRole } from "../../src/hooks";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Copy, Check, Users, Shield, TrendingUp } from "lucide-react";
+import { Plus, Copy, Check, Users, Shield, TrendingUp, Send } from "lucide-react";
 import { VaultData } from "../../src/hooks/useVault";
+import { useVaultContext } from "../../src/contexts/VaultContext";
 import { useState } from "react";
 
 interface HeroCardProps {
@@ -21,7 +22,9 @@ interface HeroCardProps {
   loading: boolean;
   error: string | null;
   isOwner?: boolean;
+  isStaff?: boolean;
   onManageTeam?: () => void;
+  onRequestWithdrawal?: () => void;
 }
 
 export function HeroCard({
@@ -34,11 +37,13 @@ export function HeroCard({
   loading,
   error,
   isOwner,
-  onManageTeam
+  isStaff,
+  onManageTeam,
+  onRequestWithdrawal,
 }: HeroCardProps) {
   const { publicKey } = useWallet();
-  // Removed internal useVault hook to avoid duplicate state
   const { roles } = useUserRole();
+  const { tokenSymbol } = useVaultContext();
   const [copied, setCopied] = useState(false);
 
   // Format balance for display
@@ -93,18 +98,31 @@ export function HeroCard({
 
   return (
     <Card className="relative overflow-hidden border-border/50 bg-white/5 backdrop-blur-xl p-8">
-      {/* Manage Team Button - Top Right */}
-      {isOwner && vault && onManageTeam && (
-        <div className="absolute top-6 right-6 z-20">
-          <Button
-            onClick={onManageTeam}
-            className="gap-2 py-5"
-            variant="outline"
-            size="sm"
-          >
-            <Users className="w-4 h-4" />
-            Manage Team
-          </Button>
+      {/* Top Right Actions: Request Withdrawal (staff) + Manage Team (owner) */}
+      {(isStaff || isOwner) && vault && (
+        <div className="absolute top-6 right-6 z-20 flex gap-3">
+          {isStaff && onRequestWithdrawal && (
+            <Button
+              onClick={onRequestWithdrawal}
+              className="gap-2 px-5 py-2.5 rounded-xl font-medium bg-primary/15 text-primary border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all duration-200 shadow-[0_0_20px_-5px_rgba(203,213,224,0.15)] hover:shadow-[0_0_24px_-4px_rgba(203,213,224,0.25)]"
+              variant="ghost"
+              size="sm"
+            >
+              <Send className="w-4 h-4" />
+              Request Withdrawal
+            </Button>
+          )}
+          {isOwner && onManageTeam && (
+            <Button
+              onClick={onManageTeam}
+              className="gap-2 px-5 py-2.5 rounded-xl font-medium bg-transparent text-muted-foreground border border-border hover:bg-secondary hover:text-foreground hover:border-primary/20 transition-all duration-200"
+              variant="ghost"
+              size="sm"
+            >
+              <Users className="w-4 h-4" />
+              Manage Team
+            </Button>
+          )}
         </div>
       )}
 
@@ -136,7 +154,6 @@ export function HeroCard({
         <div className="mb-8">
           <div className="text-sm text-muted-foreground mb-2">Total Vault Value</div>
           <div className="flex items-baseline gap-2 mb-3">
-            <span className="text-5xl font-light text-primary">$</span>
             <span className="text-6xl font-light text-primary">
               {loading ? (
                 <span className="animate-pulse text-4xl">Loading...</span>
@@ -146,7 +163,7 @@ export function HeroCard({
                 formattedBalance
               )}
             </span>
-            <span className="text-2xl font-light text-muted-foreground">USD</span>
+            <span className="text-2xl font-light text-muted-foreground">{tokenSymbol}</span>
           </div>
           
           {/* Funding Address Badge */}
