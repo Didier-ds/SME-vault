@@ -14,7 +14,13 @@ pub fn handler(ctx: Context<ExecuteWithdrawal>) -> Result<()> {
         VaultErrorCode::InvalidStatus
     );
 
-    // 2. Check time delay (if it exists)
+    // 2. Vault must not be frozen
+    require!(
+        !vault.frozen,
+        VaultErrorCode::VaultFrozen
+    );
+
+    // 3. Check time delay (if it exists)
     if let Some(delay_until) = withdrawal.delay_until {
         require!(
             clock.unix_timestamp >= delay_until,
@@ -22,13 +28,13 @@ pub fn handler(ctx: Context<ExecuteWithdrawal>) -> Result<()> {
         );
     }
 
-    // 3. Check sufficient balance
+    // 4. Check sufficient balance
     require!(
         vault_token_account.amount >= withdrawal.amount,
         VaultErrorCode::InsufficientBalance
     );
 
-    // 4. Transfer tokens using CPI with PDA signing
+    // 5. Transfer tokens using CPI with PDA signing
 
     // Build the seeds that were used to create the vault PDA
     let seeds = &[
@@ -58,7 +64,7 @@ pub fn handler(ctx: Context<ExecuteWithdrawal>) -> Result<()> {
     // Call the SPL Token transfer instruction
     token::transfer(cpi_ctx, withdrawal.amount)?;
 
-    // 5. Update withdrawal record
+    // 6. Update withdrawal record
     withdrawal.executed_at = Some(clock.unix_timestamp);
     withdrawal.status = WithdrawalStatus::Executed;
 

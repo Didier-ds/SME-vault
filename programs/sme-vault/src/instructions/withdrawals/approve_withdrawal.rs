@@ -12,6 +12,11 @@ pub fn handler(ctx:Context<ApproveWithdrawal>) -> Result<()> {
     );
 
     require!(
+        !vault.frozen,
+        VaultErrorCode::VaultFrozen
+    );
+
+    require!(
         withdrawal.status == WithdrawalStatus::Pending,
         VaultErrorCode::InvalidStatus
     );

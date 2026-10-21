@@ -10,7 +10,6 @@ pub use error::VaultErrorCode;
 pub use instructions::*;
 pub use state::*;
 
-// declare_id!("87oBsf59JzNKiCwqhpzKceYgJm1LnwPdnA3FxCE29D7p");
 declare_id!("A5nASa3jpqhhpSLmqWayd4GnW8RRe38LCncz5GZmT4Mi");
 
 #[program]
@@ -55,6 +54,13 @@ pub mod sme_vault {
         instructions::remove_approver::handler(ctx, approver)
     }
 
+    pub fn update_approval_threshold(
+        ctx: Context<UpdateApprovalThreshold>,
+        approval_threshold: u8
+    ) -> Result<()> {
+        instructions::update_approval_threshold::handler(ctx, approval_threshold)
+    }
+
     pub fn add_staff(ctx: Context<AddStaff>, staff: Pubkey) -> Result<()> {
         instructions::add_staff::handler(ctx, staff)
     }
@@ -78,5 +84,13 @@ pub mod sme_vault {
 
     pub fn execute_withdrawal(ctx: Context<ExecuteWithdrawal>) -> Result<()> {
         instructions::withdrawals::execute_withdrawal::handler(ctx)
+    }
+
+    pub fn freeze_vault(ctx: Context<FreezeVault>) -> Result<()> {
+        instructions::freeze_vault::handler(ctx)
+    }
+
+    pub fn unfreeze_vault(ctx: Context<UnfreezeVault>) -> Result<()> {
+        instructions::unfreeze_vault::handler(ctx)
     }
 }

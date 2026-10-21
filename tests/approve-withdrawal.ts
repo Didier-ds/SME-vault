@@ -450,4 +450,65 @@ describe("approve_withdrawal", () => {
       expect(error.error.errorMessage).to.include("Invalid status");
     }
   });
+
+  it("Fails when vault is frozen", async () => {
+    const amount = new anchor.BN(3500_000000);
+    const reason = "Frozen vault approval test";
+
+    let vault = await program.account.vault.fetch(vaultPda);
+    const requestId = vault.withdrawalCount;
+
+    const [withdrawalPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("withdrawal"),
+        vaultPda.toBuffer(),
+        requestId.toArrayLike(Buffer, "le", 8),
+      ],
+      program.programId
+    );
+
+    await program.methods
+      .requestWithdrawal(amount, destination.publicKey, reason)
+      .accounts({
+        withdrawal: withdrawalPda,
+        vault: vaultPda,
+        requester: staffMember.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([staffMember])
+      .rpc();
+
+    // Freeze the vault as owner
+    await program.methods
+      .freezeVault()
+      .accounts({
+        vault: vaultPda,
+        owner: provider.wallet.publicKey,
+      })
+      .rpc();
+
+    try {
+      await program.methods
+        .approveWithdrawal()
+        .accounts({
+          withdrawal: withdrawalPda,
+          vault: vaultPda,
+          approver: approver1.publicKey,
+        })
+        .signers([approver1])
+        .rpc();
+
+      expect.fail("Should have thrown an error");
+    } catch (error: any) {
+      expect(error.error.errorMessage).to.include("Vault is frozen");
+    } finally {
+      await program.methods
+        .unfreezeVault()
+        .accounts({
+          vault: vaultPda,
+          owner: provider.wallet.publicKey,
+        })
+        .rpc();
+    }
+  });
 });

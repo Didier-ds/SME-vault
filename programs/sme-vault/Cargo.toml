@@ -8,6 +8,9 @@ edition = "2021"
 crate-type = ["cdylib", "lib"]
 name = "sme_vault"
 
+[package.metadata.solana]
+stack-size = 8192
+
 [features]
 default = []
 cpi = ["no-entrypoint"]

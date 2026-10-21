@@ -364,6 +364,95 @@ describe("execute_withdrawal", () => {
     }
   });
 
+  it("Fails when vault is frozen", async () => {
+    const amount = new anchor.BN(500_000000);
+    const reason = "Frozen vault test";
+
+    // Create withdrawal request
+    let vault = await program.account.vault.fetch(vaultPda);
+    const requestId = vault.withdrawalCount;
+
+    const [withdrawalPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("withdrawal"),
+        vaultPda.toBuffer(),
+        requestId.toArrayLike(Buffer, "le", 8),
+      ],
+      program.programId
+    );
+
+    await program.methods
+      .requestWithdrawal(amount, destinationTokenAccount, reason)
+      .accounts({
+        withdrawal: withdrawalPda,
+        vault: vaultPda,
+        requester: staffMember.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([staffMember])
+      .rpc();
+
+    // Get 2 approvals
+    await program.methods
+      .approveWithdrawal()
+      .accounts({
+        withdrawal: withdrawalPda,
+        vault: vaultPda,
+        approver: approver1.publicKey,
+      })
+      .signers([approver1])
+      .rpc();
+
+    await program.methods
+      .approveWithdrawal()
+      .accounts({
+        withdrawal: withdrawalPda,
+        vault: vaultPda,
+        approver: approver2.publicKey,
+      })
+      .signers([approver2])
+      .rpc();
+
+    // Freeze the vault as owner
+    await program.methods
+      .freezeVault()
+      .accounts({
+        vault: vaultPda,
+        owner: provider.wallet.publicKey,
+      })
+      .rpc();
+
+    // Try to execute while frozen
+    try {
+      await program.methods
+        .executeWithdrawal()
+        .accounts({
+          withdrawal: withdrawalPda,
+          vault: vaultPda,
+          vaultTokenAccount: vaultTokenAccount,
+          destinationTokenAccount: destinationTokenAccount,
+          vaultAuthority: vaultPda,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          executor: executor.publicKey,
+        })
+        .signers([executor])
+        .rpc();
+
+      expect.fail("Should have thrown an error");
+    } catch (error: any) {
+      expect(error.error.errorMessage).to.include("Vault is frozen");
+    } finally {
+      // Unfreeze for subsequent tests
+      await program.methods
+        .unfreezeVault()
+        .accounts({
+          vault: vaultPda,
+          owner: provider.wallet.publicKey,
+        })
+        .rpc();
+    }
+  });
+
   it("Fails when vault has insufficient balance", async () => {
     // First, drain the vault by executing multiple withdrawals
     // Vault started with 100k, already withdrew 1k in test 1, so 99k left
